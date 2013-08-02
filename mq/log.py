@@ -16,6 +16,7 @@ class StreamHandler(logging.Handler):
     COLOR_MAP = {'ERROR': '%s%s[%%s]%s' % (BOLD, FAIL, ENDC),
                  'WARNING': '%s%s[%%s]%s' % (BOLD, WARNING, ENDC),
                  'DEBUG': '%s%s[%%s]%s' % (BOLD, OKBLUE, ENDC),
+                 'INFO': '%s%s[%%s]%s' % (BOLD, OKBLUE, ENDC),
                  }
     
     def color_map(self, header, level):
