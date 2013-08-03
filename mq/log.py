@@ -5,6 +5,9 @@ Created on Aug 1, 2013
 '''
 import logging
 import sys
+import io
+import time
+from mq.utils import now
 
 class StreamHandler(logging.Handler):
     WARNING = '\033[93m'
@@ -20,8 +23,10 @@ class StreamHandler(logging.Handler):
                  }
     
     def color_map(self, header, level):
-        return self.COLOR_MAP.get(level,'[%s]') % header  
+        return self.COLOR_MAP.get(level, '[%s]') % header  
     
+    def __init__(self, level=logging.INFO):
+        logging.Handler.__init__(self, level=level)
     def emit(self, record):
         if record.levelno == logging.INFO:
             header = 'info'
@@ -46,4 +51,101 @@ class StreamHandler(logging.Handler):
             stream.write('%s %s\n' % (header, message))
         else:
             stream.write('%s' % message)
+
+
+class BSONFormatter(object):
+        
+    def __init__(self, *args, **extra_tags):
+        object.__init__(self, *args)
+        self.extra_tags = extra_tags
+        
+    def format(self, record):
+        if isinstance(record.msg, dict):
+            data = record.msg
+        elif isinstance(record.msg, (list, tuple)):
+            data = {'items': record.msg}
+        else:
+            data = {'message':'%s\n' % (record.msg,)}
+            
+        data.update(logLevel=record.levelname, logModule=record.module, logName=record.name, **self.extra_tags)
+        return data 
+
+class MongoHandler(logging.Handler):
+    def __init__(self, collection, doc):
+        
+        logging.Handler.__init__(self, logging.INFO)
+        
+        self.collection = collection
+        self.doc = doc
+        self.setFormatter(BSONFormatter())
+        
+        
+    def emit(self, record):
+        doc = self.doc.copy()
+        data = self.format(record)
+        doc.update(data)
+        self.collection.insert(doc)
+
+class TextIOWrapperSmart(io.TextIOWrapper):
+    def write(self, s):
+        if isinstance(s, bytes):
+            s = s.decode()
+        return io.TextIOWrapper.write(self, s)
+
+class MongoStream(object):
+    def __init__(self, collection, doc, stream=None, finished=None):
+        self.collection = collection
+        self.doc = doc
+        self.stream = stream
+        self._finished = finished
+        self.stream_name = getattr(stream, 'name', None)
+        
+    def readable(self):
+        return False
+    
+    @property
+    def closed(self):
+        return False
+    
+    def writable(self):
+        return True
+
+    def seekable(self):
+        return False
+    
+    def write(self, message):
+        doc = self.doc.copy()
+        doc.update(message=message, time=now())
+        
+        self.collection.insert(doc)
+        
+        if self.stream:
+            self.stream.write(message)
+        return len(message)
+    
+    def flush(self):
+        pass
+    
+    def loglines(self, follow=False):
+        starting_finished = not follow or self._finished()
+        
+        cursor = self.collection.find(self.doc,
+                                      await_data=not starting_finished,
+                                      tailable=not starting_finished)
+        while 1:
+            for item in cursor:
+                text = item.get('message', '')
+                yield text
+            
+            if starting_finished or self._finished():
+                return
+            
+            time.sleep(1)
+            
+        return
+    
+def mstream(collection, doc, stream=None):
+    return TextIOWrapperSmart(MongoStream(collection, doc, sys.stdout), line_buffering=True)
+    
+    
 

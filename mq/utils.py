@@ -5,6 +5,14 @@ Created on Aug 1, 2013
 '''
 import signal
 import traceback
+import sys
+import logging
+from datetime import datetime
+from dateutil.tz import tzlocal
+
+class ImportStringError(Exception):
+    pass
+
 
 def handle_signals():
     def handler(signum, frame):
@@ -59,4 +67,28 @@ def import_string(import_name, silent=False):
     except ImportError, e:
         if not silent:
             raise ImportStringError(import_name, e), None, sys.exc_info()[2]
+
+def ensure_capped_collection(db, collection_name, size_mb):
+        if collection_name not in db.collection_names():
+            db.create_collection(collection_name, capped=True,
+                              size=(1024.**2) * size_mb)  # Mb
+
+        return db[collection_name]
+
+def setup_logging(worker_id, job_id, collection):
+    from mq.log import mstream, MongoHandler
+    
+    doc = {'worker_id':worker_id, 'job_id':job_id}
+    sys.stdout = mstream(collection, doc.copy(), sys.stdout)
+    sys.sterr = mstream(collection, doc.copy(), sys.stderr)
+    
+    logger = logging.getLogger('job')
+    logger.setLevel(logging.INFO) 
+    hndlr = MongoHandler(collection, doc.copy())
+    logger.addHandler(hndlr)
+    
+    
+def now():
+    return datetime.now(tzlocal())    
+    
 

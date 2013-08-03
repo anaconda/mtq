@@ -1,6 +1,4 @@
 import time
 
 def do_somthing():
-    print 'sleep'
-    raise Exception
-    print 'all ok'
+    print 'all ok 22'

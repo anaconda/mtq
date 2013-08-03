@@ -6,28 +6,32 @@ Created on Aug 1, 2013
 from argparse import ArgumentParser
 
 import mq
+from mq.factory import MQFactory
 import pymongo
 
+
+def print_stats(factory, args):
+    print 'Queues:'
+    for queue in factory.queues:
+        tags = queue.all_tags
+        print ' * name:%s tags:[%s]' % (queue, ', '.join(tags))
+        print '   count:%i' % queue.count
+        for tag in tags:
+            print '     + %10s:%i' % (tag, queue.tag_count(tag))
+    print 
+    print 'Workers:'
+    for worker in factory.workers:
+        print ' * %-10s %i' % (worker.name, worker.num_processed)
+        print '   + Queues:[%s]' % ', '.join(worker.qnames)
+        print '   + Tags:[%s]' % ', '.join(worker.tags)
 
 def main():
     
     parser = ArgumentParser(description=__doc__, version='0.0')
     args = parser.parse_args()
     
-    cli = pymongo.MongoClient('mongodb://localhost/?journal=true')
-    db = cli.test_queue 
+    factory = MQFactory.from_config()
+    print_stats(factory, args)
     
-    print 'Tags:'
-    for tag in mq.Queue.all_tags(db):
-        print ' * %-10s %i' % (tag, mq.Queue.tag_count(tag, db))
-    print
-    print 'Workers:'
-    for worker in mq.Worker.all_workers(db):
-        name = worker.get('name')
-        print ' * %-10s %i' % (name, mq.Worker.processed_count(worker.get('_id'), db))
-        print '   + Tags:', ', '.join(worker.get('tags'))
-    
-    queue = mq.Queue([], db) 
-
 if __name__ == '__main__':
     main()
