@@ -4,10 +4,7 @@ Created on Aug 1, 2013
 @author: sean
 '''
 from argparse import ArgumentParser
-
-import mq
-from mq.factory import MQFactory
-import pymongo
+from mtq.factory import MTQFactory
 from bson.objectid import ObjectId
 import sys
 
@@ -28,7 +25,7 @@ def main():
     
     args = parser.parse_args()
     
-    factory = MQFactory.from_config()
+    factory = MTQFactory.from_config()
     
     if args.job_id:
         stream = factory.job_stream(args.job_id)

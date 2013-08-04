@@ -3,13 +3,16 @@ Created on Aug 1, 2013
 
 @author: sean
 '''
+from mtq.utils import now
+import io
 import logging
 import sys
-import io
 import time
-from mq.utils import now
 
 class StreamHandler(logging.Handler):
+    '''
+    Handler to write to stdout with colored output 
+    '''
     WARNING = '\033[93m'
     OKBLUE = '\033[94m'
     OKGREEN = '\033[92m'
@@ -54,7 +57,9 @@ class StreamHandler(logging.Handler):
 
 
 class BSONFormatter(object):
-        
+    '''
+    format recort to bison dict
+    '''
     def __init__(self, *args, **extra_tags):
         object.__init__(self, *args)
         self.extra_tags = extra_tags
@@ -71,6 +76,9 @@ class BSONFormatter(object):
         return data 
 
 class MongoHandler(logging.Handler):
+    '''
+    Log to monog db
+    '''
     def __init__(self, collection, doc):
         
         logging.Handler.__init__(self, logging.INFO)
@@ -87,12 +95,18 @@ class MongoHandler(logging.Handler):
         self.collection.insert(doc)
 
 class TextIOWrapperSmart(io.TextIOWrapper):
+    '''
+    allow print to io.TextIOWrapper
+    '''
     def write(self, s):
         if isinstance(s, bytes):
             s = s.decode()
         return io.TextIOWrapper.write(self, s)
 
 class MongoStream(object):
+    '''
+    File like object to read/write to mongodb
+    '''
     def __init__(self, collection, doc, stream=None, finished=None):
         self.collection = collection
         self.doc = doc
@@ -145,6 +159,9 @@ class MongoStream(object):
         return
     
 def mstream(collection, doc, stream=None):
+    '''
+    Create a buffered mongo stream (good for print statements) 
+    '''
     return TextIOWrapperSmart(MongoStream(collection, doc, sys.stdout), line_buffering=True)
     
     

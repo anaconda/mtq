@@ -5,15 +5,18 @@ Created on Aug 2, 2013
 '''
 from bson.objectid import ObjectId
 from datetime import datetime
-from mq.job import Job
-from mq.defaults import _collection_base, _logsize
-from mq.utils import ensure_capped_collection, now
+from mtq.job import Job
+from mtq.utils import now
 
 class QueueError(Exception):
     pass
 
 class Queue(object):
+    '''
+    A queue to enqueue an pop tasks
     
+    Do not create directly use MTQFactory.queue 
+    '''
     def __str__(self):
         return self.name
         
@@ -32,10 +35,26 @@ class Queue(object):
         
 
     def enqueue(self, func_or_str, *args, **kwargs):
+        '''
+        Creates a job to represent the delayed function call and enqueues
+        it.
+        
+        Expects the function to call, along with the arguments and keyword
+        arguments.
+        
+        The function argument `func_or_str` may be a function or a string representing the location of a function
+        '''
         return self.enqueue_call(func_or_str, args, kwargs)
     
     def enqueue_call(self, func_or_str, args=(), kwargs=None, tags=(), priority=None, timeout=None):
+        '''
+        Creates a job to represent the delayed function call and enqueues
+        it.
         
+        It is much like `.enqueue()`, except that it takes the function's args
+        and kwargs as explicit arguments.  Any kwargs passed to this function
+        contain options for MQ itself.
+        '''
         if not isinstance(func_or_str, basestring):
             name = getattr(func_or_str, '__name__', None)
             module = getattr(func_or_str, '__module__', None)
@@ -96,19 +115,28 @@ class Queue(object):
         
     @property
     def count(self):
+        'The number of jobs in this queue (filtering by tags too)'
         collection = self.factory.queue_collection
         query = self.factory.make_query([self.name], self.tags, self.priority)
         return collection.find(query).count()
     
-    def pop(self, worker_id=None):
-        return self.factory.pop_item(worker_id, [self.name], self.tags, self.priority)
-    
     @property
     def all_tags(self):
+        'All the unique tags of jobs in this queue'
         collection = self.factory.queue_collection
         return collection.find({'qname':self.name}).distinct('tags')
 
-
-    def tag_count(self, tag):
+    def pop(self, worker_id=None):
+        'Pop a job off the queue'
+        return self.factory.pop_item(worker_id, [self.name], self.tags, self.priority)
+    
+    def tag_count(self, tags):
+        'Number of pending jobs in this queue with this tag'
         collection = self.factory.queue_collection
-        return collection.find({'qname':self.name, 'tags':tag, 'processed':False}).count()
+        
+        if not isinstance(tags, (list,tuple)):
+            tags = [tags]
+        query = {'qname':self.name, 'processed':False}
+        query.update(self.factory.make_tag_query(tags))
+        
+        return collection.find(query).count()

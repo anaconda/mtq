@@ -4,10 +4,8 @@ Created on Aug 1, 2013
 @author: sean
 '''
 from argparse import ArgumentParser
-
-import mq
 from bson.objectid import ObjectId
-from mq.factory import MQFactory
+from mtq.factory import MTQFactory
 config = {}
 
 def aux(args):
@@ -17,7 +15,7 @@ def aux(args):
     tags = args.tags or config.get('TAGS', ())
     queues = args.queues or config.get('QUEUES', ())
     
-    factory = MQFactory.from_config(config)
+    factory = MTQFactory.from_config(config)
     
     worker = factory.new_worker(queues=queues, tags=tags, log_worker_output=args.log_output)
     

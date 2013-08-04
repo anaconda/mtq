@@ -3,21 +3,22 @@ Created on Aug 2, 2013
 
 @author: sean
 '''
-from datetime import datetime
-import logging
-from mq.log import StreamHandler, MongoStream, MongoHandler
-from mq.defaults import _collection_base, _workersize, _logsize
-import os
 from contextlib import contextmanager
-import sys
+from datetime import datetime
+from mtq.log import StreamHandler, MongoStream, MongoHandler
+from mtq.utils import handle_signals, setup_logging, now
 from multiprocessing import Process
+import logging
+import os
+import sys
 import time
-from mq.utils import handle_signals, setup_logging, now
 
 class Worker(object):
+    '''
+    Should create a worker from MTQFactory.new_worker
+    '''
     def __init__(self, factory, queues=(), tags=(), priority=0,
                  poll_interval=1, exception_handler=None,
-                 _size=_workersize,
                  log_worker_output=False):
         
         self.name = '%s.%s' % (os.uname()[1], os.getpid())
@@ -26,7 +27,6 @@ class Worker(object):
         self.tags = tags
         self.priority = priority
         
-        self._size = _size
         self._log_worker_output = log_worker_output
         self.factory = factory
         self.poll_interval = poll_interval
@@ -44,6 +44,14 @@ class Worker(object):
     
     @contextmanager
     def register(self):
+        '''
+        Internal
+        Contextmanager, register the birth and death of this worker
+        
+        eg::
+            with worker.register():
+                # Work
+        '''
         self.collection = self.factory.worker_collection
         
         self.worker_id = self.collection.insert({'name': self.name,
@@ -68,7 +76,12 @@ class Worker(object):
                                     })
         
     def work(self, one=False, batch=False):
+        '''
+        Main work function
         
+        :param one: wait for the first job execute and then exit
+        :param batch: work until the queue is empty, then exit 
+        '''
         with self.register():
             try:
                 self.start_main_loop(one, batch)
@@ -82,6 +95,9 @@ class Worker(object):
                 proc.join(timeout=job.doc.get('timeout'))
 
     def start_main_loop(self, one=False, batch=False):
+        '''
+        Start the main loop and process jobs
+        '''
         self.logger.info('Starting Main Loop worker=%s _id=%s' % (self.name, self.worker_id))
         while 1:
             job = self.factory.pop_item(worker_id=self.worker_id,
@@ -107,7 +123,9 @@ class Worker(object):
         self.logger.info('Exiting Main Loop')
     
     def process_job(self, job):
-        
+        '''
+        Process a single job in a multiprocessing.Process
+        '''
         proc = Process(target=self._process_job, args=(job,))
         self._current = proc, job
         proc.start()
@@ -122,7 +140,8 @@ class Worker(object):
     
         
     def _process_job(self, job):
-        
+        '''
+        '''
         handle_signals()
         
         if self._log_worker_output:

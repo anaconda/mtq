@@ -1,7 +1,5 @@
 '''
-Created on Aug 2, 2013
-
-@author: sean
+Default values for the queue
 '''
 _collection_base = 'mq'
 _qsize = 50

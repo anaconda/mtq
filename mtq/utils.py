@@ -15,6 +15,9 @@ class ImportStringError(Exception):
 
 
 def handle_signals():
+    '''
+    Handle signals in multiprocess.Process threads
+    '''
     def handler(signum, frame):
         signal.signal(signal.SIGINT, signal.default_int_handler)
         
@@ -69,14 +72,19 @@ def import_string(import_name, silent=False):
             raise ImportStringError(import_name, e), None, sys.exc_info()[2]
 
 def ensure_capped_collection(db, collection_name, size_mb):
-        if collection_name not in db.collection_names():
-            db.create_collection(collection_name, capped=True,
-                              size=(1024.**2) * size_mb)  # Mb
+    '''
+    '''
+    if collection_name not in db.collection_names():
+        db.create_collection(collection_name, capped=True,
+                          size=(1024.**2) * size_mb)  # Mb
 
-        return db[collection_name]
+    return db[collection_name]
 
 def setup_logging(worker_id, job_id, collection):
-    from mq.log import mstream, MongoHandler
+    '''
+    set up logging for worker
+    '''
+    from mtq.log import mstream, MongoHandler
     
     doc = {'worker_id':worker_id, 'job_id':job_id}
     sys.stdout = mstream(collection, doc.copy(), sys.stdout)
