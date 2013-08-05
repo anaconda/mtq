@@ -9,6 +9,7 @@ setup(
     version="0.0.0",
     author='Continuum Analytics',
     author_email='sean.ross-ross@continuum.io',
-    packages=find_packages()
+    description='Mongo Task Queue',
+    packages=find_packages(),
 )
 
