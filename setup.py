@@ -11,5 +11,18 @@ setup(
     author_email='sean.ross-ross@continuum.io',
     description='Mongo Task Queue',
     packages=find_packages(),
+    
+    install_requires=['pymongo==2.5.2',
+                      'python-dateutil==2.1'
+                      ],
+
+    entry_points={
+          'console_scripts': [
+              'mtq-worker = mtq.scripts.worker:main',
+              'mtq-info = mtq.scripts.info:main',
+              'mtq-tail = mtq.scripts.log:main',
+              ]
+                 },
+
 )
 
