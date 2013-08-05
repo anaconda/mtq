@@ -31,10 +31,10 @@ def count_words_at_url(url):
 Then, create a MTQ queue:
 
 ```python
-from mtq import default
+import mtq
 
-factory = default()
-q = factory.queue('default')
+conn = mtq.default_connection()
+q = conn.queue()
 ```
 
 
@@ -42,7 +42,7 @@ And enqueue the function call:
 
 ```python
 from my_module import count_words_at_url
-result = q.enqueue(count_words_at_url, 'http://binstar.com')
+result = q.enqueue(count_words_at_url, 'http://binstar.org')
 ```
 
 For a more complete example, refer to the [docs][d].  But this is the essence.
@@ -56,7 +56,7 @@ from your project's directory:
 ```bash
 $ mtq-worker 
 [info] Starting Main Loop worker=mr_chomps.local.67313 _id=51ffb3dd7d150a06f28b1e11
-Got count_words_at_url('http://binstar.com') from default
+Got count_words_at_url('http://binstar.org') from default
 Job result = 818
 ```
 
@@ -72,3 +72,4 @@ Simply use the following command to install the latest released version:
 
 [m]: http://www.mongodb.org/
 [d]: http://example.com
+

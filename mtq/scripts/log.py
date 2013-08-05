@@ -4,7 +4,7 @@ Created on Aug 1, 2013
 @author: sean
 '''
 from argparse import ArgumentParser
-from mtq.factory import MTQFactory
+from mtq.connection import MTQConnection
 from bson.objectid import ObjectId
 import sys
 
@@ -25,7 +25,7 @@ def main():
     
     args = parser.parse_args()
     
-    factory = MTQFactory.from_config()
+    factory = MTQConnection.from_config()
     
     if args.job_id:
         stream = factory.job_stream(args.job_id)

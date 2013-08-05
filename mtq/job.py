@@ -10,7 +10,7 @@ class Job(object):
     '''
     A Job is just a convenient datastructure to pass around job (meta) data.
     
-    Do not create directly, use MTQFactory.get_job
+    Do not create directly, use MTQConnection.get_job
     '''
     def __init__(self, factory, doc):
         self.factory = factory

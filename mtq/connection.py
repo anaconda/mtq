@@ -8,7 +8,7 @@ from pymongo.mongo_client import MongoClient
 from mtq.defaults import _collection_base, _qsize, _workersize, _logsize
 from mtq.utils import ensure_capped_collection, now
 
-class MTQFactory(object):
+class MTQConnection(object):
     '''
     Base object that you should use to create all other TQ objects 
     
@@ -18,7 +18,7 @@ class MTQFactory(object):
     :param collection_base: base name for collection
     :param qsize: the size of the capped collection of the queue
     
-    ..sealso: MTQFactory.default, MTQFactory.from_config
+    ..sealso: MTQConnection.default, MTQConnection.from_config
     '''
     
     def __init__(self, db, collection_base=_collection_base, qsize=_qsize,
@@ -32,14 +32,14 @@ class MTQFactory(object):
     @classmethod
     def default(cls):
         '''
-        Create an MTQFactory default configuration using mongo from localhost
+        Create an MTQConnection default configuration using mongo from localhost
         '''
         return cls.from_config()
 
     @classmethod
     def from_config(cls, config=None, client=None):
         '''
-        Create an MTQFactory from a config dict, 
+        Create an MTQConnection from a config dict, 
         
         :param config: configutation dict, with the parameters
             * DB_HOST

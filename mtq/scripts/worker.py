@@ -5,7 +5,7 @@ Created on Aug 1, 2013
 '''
 from argparse import ArgumentParser
 from bson.objectid import ObjectId
-from mtq.factory import MTQFactory
+from mtq.connection import MTQConnection
 config = {}
 
 def aux(args):
@@ -15,7 +15,7 @@ def aux(args):
     tags = args.tags or config.get('TAGS', ())
     queues = args.queues or config.get('QUEUES', ())
     
-    factory = MTQFactory.from_config(config)
+    factory = MTQConnection.from_config(config)
     
     worker = factory.new_worker(queues=queues, tags=tags, log_worker_output=args.log_output)
     
@@ -39,11 +39,11 @@ def aux(args):
 
 def main():
     parser = ArgumentParser(description=__doc__, version='0.0')
-    parser.add_argument('queues', nargs='*', default=['default'])
-    parser.add_argument('-r', '--reloader', action='store_true')
-    parser.add_argument('-t', '--tags', nargs='*')
-    parser.add_argument('-c', '--config')
-    parser.add_argument('-l', '--log-output', action='store_true')
+    parser.add_argument('queues', nargs='*', default=['default'], help='The queues to listen on (default: %(default)r)')
+    parser.add_argument('-r', '--reloader', action='store_true', help='Reload the worker when it detects a change')
+    parser.add_argument('-t', '--tags', nargs='*', help='only process jobs which contain all of the tags')
+    parser.add_argument('-c', '--config', help='Python module containing MTQ settings.')
+    parser.add_argument('-l', '--log-output', action='store_true', help='Store job and woker ouput in the db, seealso mtq-tail')
     parser.add_argument('-1', '--one', action='store_true',
                         help='Process only the first job')
     parser.add_argument('-b', '--batch', action='store_true',

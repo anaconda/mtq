@@ -1,19 +1,19 @@
 '''
 MQ module
 '''
-from .factory import MTQFactory
+from .connection import MTQConnection
 from . import defaults
 from .queue import Queue
 from .worker import Worker, WorkerProxy
 from .job import Job
 
-def default():
+def default_connection():
     '''
     Create a default mtq instance to created queues, workers, and jobs
     '''
-    return MTQFactory.default()
+    return MTQConnection.default()
      
-def create(db, 
+def create_connection(db, 
            collection_base=defaults._collection_base, 
            qsize=defaults._qsize, 
            workersize=defaults._workersize, 
@@ -26,7 +26,7 @@ def create(db,
     :param qsize: the size of the capped collection of the queue
 
     '''
-    return MTQFactory(db, collection_base, qsize, workersize, logsize)
+    return MTQConnection(db, collection_base, qsize, workersize, logsize)
     
 def from_config(config=None, client=None):
     '''
@@ -39,6 +39,6 @@ def from_config(config=None, client=None):
         * COLLECTION_SIZE
     :param client: a pymongo.MongoClient or None
     '''
-    return MTQFactory.from_config(config, client)
+    return MTQConnection.from_config(config, client)
 
 

@@ -15,7 +15,7 @@ import time
 
 class Worker(object):
     '''
-    Should create a worker from MTQFactory.new_worker
+    Should create a worker from MTQConnection.new_worker
     '''
     def __init__(self, factory, queues=(), tags=(), priority=0,
                  poll_interval=1, exception_handler=None,

@@ -5,7 +5,7 @@ Created on Aug 1, 2013
 '''
 from __future__ import print_function
 from argparse import ArgumentParser
-from mtq.factory import MTQFactory
+from mtq.connection import MTQConnection
 
 def print_stats(factory, args):
     print( 'Queues:')
@@ -27,7 +27,7 @@ def main():
     parser = ArgumentParser(description=__doc__, version='0.0')
     args = parser.parse_args()
     
-    factory = MTQFactory.from_config()
+    factory = MTQConnection.from_config()
     print_stats(factory, args)
     
 if __name__ == '__main__':

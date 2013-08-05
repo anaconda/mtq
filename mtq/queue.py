@@ -15,7 +15,7 @@ class Queue(object):
     '''
     A queue to enqueue an pop tasks
     
-    Do not create directly use MTQFactory.queue 
+    Do not create directly use MTQConnection.queue 
     '''
     def __str__(self):
         return self.name
