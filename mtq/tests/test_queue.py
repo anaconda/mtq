@@ -10,7 +10,7 @@ class TestQueue(MTQTestCase):
     def test_create_queue(self):
         'Creating queues.'
         q = self.factory.queue('my-queue', ['tags'])
-        self.assertEquals(q.name, 'my-queue')
+        self.assertEqual(q.name, 'my-queue')
         self.assertEqual(q.count, 0)
         
     def test_enqueue_call(self):

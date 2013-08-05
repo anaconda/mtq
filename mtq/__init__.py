@@ -1,8 +1,11 @@
 '''
 MQ module
 '''
-from factory import MTQFactory
-import defaults
+from .factory import MTQFactory
+from . import defaults
+from .queue import Queue
+from .worker import Worker, WorkerProxy
+from .job import Job
 
 def default():
     '''
@@ -38,7 +41,4 @@ def from_config(config=None, client=None):
     '''
     return MTQFactory.from_config(config, client)
 
-from queue import Queue
-from worker import Worker, WorkerProxy
-from job import Job
 

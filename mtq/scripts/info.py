@@ -3,23 +3,24 @@ Created on Aug 1, 2013
 
 @author: sean
 '''
+from __future__ import print_function
 from argparse import ArgumentParser
 from mtq.factory import MTQFactory
 
 def print_stats(factory, args):
-    print 'Queues:'
+    print( 'Queues:')
     for queue in factory.queues:
         tags = queue.all_tags
-        print ' * name:%s tags:[%s]' % (queue, ', '.join(tags))
-        print '   count:%i' % queue.count
+        print(' * name:%s tags:[%s]' % (queue, ', '.join(tags)))
+        print('   count:%i' % queue.count)
         for tag in tags:
-            print '     + %10s:%i' % (tag, queue.tag_count(tag))
-    print 
-    print 'Workers:'
+            print('     + %10s:%i' % (tag, queue.tag_count(tag)))
+    print()
+    print('Workers:')
     for worker in factory.workers:
-        print ' * %-10s %i' % (worker.name, worker.num_processed)
-        print '   + Queues:[%s]' % ', '.join(worker.qnames)
-        print '   + Tags:[%s]' % ', '.join(worker.tags)
+        print(' * %-10s %i' % (worker.name, worker.num_processed))
+        print('   + Queues:[%s]' % ', '.join(worker.qnames))
+        print('   + Tags:[%s]' % ', '.join(worker.tags))
 
 def main():
     

@@ -22,7 +22,7 @@ class Queue(object):
         
     def __init__(self, factory, name, tags=(), priority=0):
         
-        if not isinstance(name, basestring):
+        if not isinstance(name, str):
             raise TypeError('name must be a string')
         
         if not isinstance(tags, (list, tuple)):
@@ -55,7 +55,7 @@ class Queue(object):
         and kwargs as explicit arguments.  Any kwargs passed to this function
         contain options for MQ itself.
         '''
-        if not isinstance(func_or_str, basestring):
+        if not isinstance(func_or_str, str):
             name = getattr(func_or_str, '__name__', None)
             module = getattr(func_or_str, '__module__', None)
             

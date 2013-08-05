@@ -67,9 +67,9 @@ def import_string(import_name, silent=False):
             modname = module + '.' + obj
             __import__(modname)
             return sys.modules[modname]
-    except ImportError, e:
+    except ImportError as e:
         if not silent:
-            raise ImportStringError(import_name, e), None, sys.exc_info()[2]
+            raise (ImportStringError(import_name, e), None, sys.exc_info()[2])
 
 def ensure_capped_collection(db, collection_name, size_mb):
     '''

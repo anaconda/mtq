@@ -13,7 +13,7 @@ setup(
     packages=find_packages(),
     
     install_requires=['pymongo==2.5.2',
-                      'python-dateutil==2.1'
+                      'python-dateutil==2.1',
                       ],
 
     entry_points={
