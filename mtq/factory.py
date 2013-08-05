@@ -127,7 +127,7 @@ class MTQFactory(object):
         else:
             return mtq.Job(self, doc)
     
-    def queue(self, name, tags=(), priority=0):
+    def queue(self, name='default', tags=(), priority=0):
         '''
         Create a queue object
         

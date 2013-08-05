@@ -20,7 +20,7 @@ class Queue(object):
     def __str__(self):
         return self.name
         
-    def __init__(self, factory, name, tags=(), priority=0):
+    def __init__(self, factory, name='default', tags=(), priority=0):
         
         if not isinstance(name, str):
             raise TypeError('name must be a string')
