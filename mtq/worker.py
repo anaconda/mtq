@@ -99,7 +99,9 @@ class Worker(object):
         Start the main loop and process jobs
         '''
         self.logger.info('Starting Main Loop worker=%s _id=%s' % (self.name, self.worker_id))
+        self.logger.info('Listening for jobs queues=[%s] tags=[%s]' %(', '.join(self.queues), ', '.join(self.tags)))
         while 1:
+            
             job = self.factory.pop_item(worker_id=self.worker_id,
                                         queues=self.queues,
                                         tags=self.tags,
@@ -109,24 +111,21 @@ class Worker(object):
                 time.sleep(self.poll_interval)
                 continue
             
-            self.logger.info('Popped Job _id=%s queue=%s tags=%s' % (job.id, job.qname, ', '.join(job.tags)))
-            self.logger.info(job.call_str)
             failed = self.process_job(job)
-            job.set_finished(failed)
-            
-            if failed:
-                self.logger.error('Job %s failed' % (job.doc['_id']))
-            else:
-                self.logger.info('Job %s finsihed successfully' % (job.doc['_id']))
             
             if one: break
-        
+            
+            self.logger.info('Listening for jobs queues=[%s] tags=[%s]' %(', '.join(self.queues), ', '.join(self.tags)))
+            
         self.logger.info('Exiting Main Loop')
     
     def process_job(self, job):
         '''
         Process a single job in a multiprocessing.Process
         '''
+        self.logger.info('Popped Job _id=%s queue=%s tags=%s' % (job.id, job.qname, ', '.join(job.tags)))
+        self.logger.info(job.call_str)
+
         proc = Process(target=self._process_job, args=(job,))
         self._current = proc, job
         proc.start()
@@ -137,8 +136,16 @@ class Worker(object):
         
         self._current = None
         
-        return proc.exitcode != 0
+        failed = proc.exitcode != 0
     
+        if failed:
+            self.logger.error('Job %s failed' % (job.doc['_id']))
+        else:
+            self.logger.info('Job %s finsihed successfully' % (job.doc['_id']))
+        
+        job.set_finished(failed)
+        
+        return  failed
         
     def _process_job(self, job):
         '''

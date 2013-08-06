@@ -9,6 +9,8 @@ import sys
 import logging
 from datetime import datetime
 from dateutil.tz import tzlocal
+from bson.errors import InvalidId
+from bson.objectid import ObjectId
 
 class ImportStringError(Exception):
     pass
@@ -114,3 +116,8 @@ def config_dict(filename):
 
 
 
+def object_id(oid):
+    try:
+        return ObjectId(oid)
+    except InvalidId:
+        raise TypeError()

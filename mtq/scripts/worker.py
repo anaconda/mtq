@@ -4,12 +4,10 @@ Created on Aug 1, 2013
 @author: sean
 '''
 from argparse import ArgumentParser
-from bson.objectid import ObjectId
 from mtq.connection import MTQConnection
-from mtq.utils import config_dict
-import logging
 from mtq.log import StreamHandler
-
+from mtq.utils import config_dict, object_id
+import logging
 
 def aux(args):
     
@@ -38,6 +36,7 @@ def aux(args):
         if job is None:
             worker.logger.error('No job %s' % args.job_id)
             return
+        
         worker.process_job(job)
         return
         
@@ -55,7 +54,7 @@ def main():
                         help='Process only the first job')
     parser.add_argument('-b', '--batch', action='store_true',
                         help='Process jobs until the queue is empty, then exit')
-    parser.add_argument('-j', '--job-id', type=ObjectId,
+    parser.add_argument('-j', '--job-id', type=object_id,
                         help='Process the job (even if it has already been processed)')
     args = parser.parse_args()
     
