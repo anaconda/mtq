@@ -22,9 +22,9 @@ class Queue(object):
     def __repr__(self):
         return '<mtq.Queue name:%s tags:%r>' % (self.name, self.tags)
         
-    def __init__(self, factory, name=u'default', tags=(), priority=0):
+    def __init__(self, factory, name='default', tags=(), priority=0):
         
-        self.name = name or u'default'
+        self.name = name or 'default'
         self.factory = factory
         self.tags = tuple(tags) if tags else ()
         self.priority = priority

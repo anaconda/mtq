@@ -45,6 +45,7 @@ class TestQueue(MTQTestCase):
         job = mtq.Job(self.factory, {'execute':{'func_str':'mtq.tests.fixture.test_func',
                                                 'args':(1, 2), 'kwargs':{}},
                                      '_id':'abc',
+                                     'qname':'qname',
                                      })
         
         worker = self.factory.new_worker(['q1', 'q2'], ['t1', 't2'])
@@ -68,6 +69,7 @@ class TestQueue(MTQTestCase):
         job = mtq.Job(self.factory, {'execute':{'func_str':'mtq.tests.fixture.test_func_fail',
                                                 'args':(1, 2), 'kwargs':{}},
                                      '_id':'abc',
+                                     'qname':'qname',
                                      })
         
         worker = self.factory.new_worker(['q1', 'q2'], ['t1', 't2'])
@@ -94,6 +96,8 @@ class TestQueue(MTQTestCase):
         job = mtq.Job(self.factory, {'execute':{'func_str':'mtq.tests.fixture.test_func',
                                                 'args':(1, 2), 'kwargs':{}},
                                      '_id':'abc',
+                                     'qname':'qname',
+                                     'tags':[],
                                      })
         
         worker = self.factory.new_worker(['q1', 'q2'], ['t1', 't2'])
@@ -105,6 +109,8 @@ class TestQueue(MTQTestCase):
         job = mtq.Job(self.factory, {'execute':{'func_str':'mtq.tests.fixture.test_func_fail',
                                                 'args':(1, 2), 'kwargs':{}},
                                      '_id':'abc',
+                                     'qname':'qname',
+                                     'tags':[],
                                      })
         
         worker = self.factory.new_worker(['q1', 'q2'], ['t1', 't2'], silence=True)
