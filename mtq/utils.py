@@ -86,15 +86,15 @@ def ensure_capped_collection(db, collection_name, size_mb):
 
     return db[collection_name]
 
-def setup_logging(worker_id, job_id, collection):
+def setup_logging(worker_id, job_id, collection, silence=False):
     '''
     set up logging for worker
     '''
     from mtq.log import mstream, MongoHandler
     
     doc = {'worker_id':worker_id, 'job_id':job_id}
-    sys.stdout = mstream(collection, doc.copy(), sys.stdout)
-    sys.sterr = mstream(collection, doc.copy(), sys.stderr)
+    sys.stdout = mstream(collection, doc.copy(), sys.stdout, silence)
+    sys.sterr = mstream(collection, doc.copy(), sys.stderr, silence)
     
     logger = logging.getLogger('job')
     logger.setLevel(logging.INFO) 

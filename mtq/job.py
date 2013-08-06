@@ -96,4 +96,6 @@ class Job(object):
         cursor = collection.find({'_id':self.id, 'processed':True})
         return bool(cursor.count())
     
+    def cancel(self):
+        self.set_finished()
      

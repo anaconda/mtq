@@ -12,6 +12,7 @@ import logging
 import os
 import sys
 import time
+import io
 
 class Worker(object):
     '''
@@ -19,7 +20,7 @@ class Worker(object):
     '''
     def __init__(self, factory, queues=(), tags=(), priority=0,
                  poll_interval=1, exception_handler=None,
-                 log_worker_output=False):
+                 log_worker_output=False, silence=False):
         
         self.name = '%s.%s' % (os.uname()[1], os.getpid())
         
@@ -32,14 +33,12 @@ class Worker(object):
         self.poll_interval = poll_interval
         
         self.logger = logging.getLogger('mq.Worker')
-        self.logger.setLevel(logging.INFO)
-        hdlr = StreamHandler()
-        self.logger.addHandler(hdlr)
         
         self._current = None
         self._handler = exception_handler
         self._pre_call = None
         self._post_call = None
+        self.silence = silence
         
         
     
@@ -147,7 +146,11 @@ class Worker(object):
         handle_signals()
         
         if self._log_worker_output:
-            setup_logging(self.worker_id, job.id, self.factory.logging_collection)
+            setup_logging(self.worker_id, job.id, self.factory.logging_collection, self.silence)
+        elif self.silence:
+            sys.stderr = io.BytesIO()
+            sys.stdout = io.BytesIO()
+            
         
         logger = logging.getLogger('job')
         logger.info('Starting Job %s' % job.id)
@@ -169,6 +172,12 @@ class Worker(object):
     def _post(self, job):
         if self._post_call: self._post_call(job)
 
+    def set_pre(self, func):
+        self._pre_call = func
+
+    def set_post(self, func):
+        self._post_call = func
+        
     def push_exception_handler(self, handler):
         self._handler = handler
     

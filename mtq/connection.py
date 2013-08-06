@@ -5,7 +5,7 @@ Created on Aug 2, 2013
 '''
 import mtq
 from pymongo.mongo_client import MongoClient
-from mtq.defaults import _collection_base, _qsize, _workersize, _logsize,\
+from mtq.defaults import _collection_base, _qsize, _workersize, _logsize, \
     _task_map
 from mtq.utils import ensure_capped_collection, now
 
@@ -110,7 +110,10 @@ class MTQConnection(object):
                  'process_after': {'$lte':now()},
                  }
         if queues:
-            query['qname'] = {'$in': queues}
+            if len(queues) == 1:
+                query['qname'] = queues[0]
+            else:
+                query['qname'] = {'$in': queues}
             
         query.update(self.make_tag_query(tags))
         return query
@@ -140,6 +143,12 @@ class MTQConnection(object):
         else:
             return mtq.Job(self, doc)
     
+    def items(self, queues, tags, priority=0):
+        query = self.make_query(queues, tags, priority)
+        cursor = self.queue_collection.find(query)
+        
+        return [mtq.Job(self, doc) for doc in cursor]
+    
     def queue(self, name='default', tags=(), priority=0):
         '''
         Create a queue object
@@ -153,7 +162,7 @@ class MTQConnection(object):
     
 
         
-    def new_worker(self, queues=(), tags=(), priority=0, log_worker_output=False):
+    def new_worker(self, queues=(), tags=(), priority=0, silence=False, log_worker_output=False):
         '''
         Create a worker object
         
@@ -163,7 +172,8 @@ class MTQConnection(object):
         :param log_worker_output: if true, log worker output to the db
         '''
         return mtq.Worker(self, queues, tags, priority,
-                         log_worker_output=log_worker_output)
+                         log_worker_output=log_worker_output,
+                         silence=silence)
     
     #===========================================================================
     # Workers

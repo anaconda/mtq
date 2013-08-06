@@ -107,11 +107,12 @@ class MongoStream(object):
     '''
     File like object to read/write to mongodb
     '''
-    def __init__(self, collection, doc, stream=None, finished=None):
+    def __init__(self, collection, doc, stream=None, finished=None, silence=False):
         self.collection = collection
         self.doc = doc
         self.stream = stream
         self._finished = finished
+        self.silence = silence
         self.stream_name = getattr(stream, 'name', None)
         
     def readable(self):
@@ -133,7 +134,7 @@ class MongoStream(object):
         
         self.collection.insert(doc)
         
-        if self.stream:
+        if self.stream and not self.silence:
             self.stream.write(message)
         return len(message)
     
@@ -158,11 +159,11 @@ class MongoStream(object):
             
         return
     
-def mstream(collection, doc, stream=None):
+def mstream(collection, doc, stream=None, silence=False):
     '''
     Create a buffered mongo stream (good for print statements) 
     '''
-    return TextIOWrapperSmart(MongoStream(collection, doc, sys.stdout), line_buffering=True)
+    return TextIOWrapperSmart(MongoStream(collection, doc, sys.stdout, silence), line_buffering=True)
     
     
 

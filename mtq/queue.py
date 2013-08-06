@@ -19,6 +19,8 @@ class Queue(object):
     '''
     def __str__(self):
         return self.name
+    def __repr__(self):
+        return '<mtq.Queue name:%s tags:%r>' % (self.name, self.tags)
         
     def __init__(self, factory, name=u'default', tags=(), priority=0):
         
@@ -76,12 +78,13 @@ class Queue(object):
                'qname':self.name,
                'tags': self.tags + tuple(tags),
                
-               'execute': execute,
                'process_after': now(),
+               'priority': priority,
+               
+               'execute': execute,
                'enqueued_at': now(),
                'started_at': datetime.fromtimestamp(0),
                'finsished_at': datetime.fromtimestamp(0),
-               'priority': priority,
                'processed': False,
                'failed': False,
                'timeout':timeout,
@@ -95,24 +98,15 @@ class Queue(object):
     
     
     @property
-    def _query(self):
-        query = {'processed':False,
-                'priority':{'$gte':self.priority},
-                'process_after': {'$lte': now()},
-                 }
-        
-        if self.name:
-            query.update(qname=self.name)
-            
-        query.update(self._tag_query)
-        return query
-        
-    @property
     def count(self):
         'The number of jobs in this queue (filtering by tags too)'
         collection = self.factory.queue_collection
         query = self.factory.make_query([self.name], self.tags, self.priority)
         return collection.find(query).count()
+    
+    def is_empty(self):
+        'The number of jobs in this queue (filtering by tags too)'
+        return bool(self.count == 0)
     
     @property
     def all_tags(self):
@@ -123,6 +117,11 @@ class Queue(object):
     def pop(self, worker_id=None):
         'Pop a job off the queue'
         return self.factory.pop_item(worker_id, [self.name], self.tags, self.priority)
+    
+    @property
+    def jobs(self):
+        return self.factory.items([self.name], self.tags, self.priority)
+        
     
     def tag_count(self, tags):
         'Number of pending jobs in this queue with this tag'

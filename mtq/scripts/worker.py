@@ -7,9 +7,17 @@ from argparse import ArgumentParser
 from bson.objectid import ObjectId
 from mtq.connection import MTQConnection
 from mtq.utils import config_dict
+import logging
+from mtq.log import StreamHandler
 
 
 def aux(args):
+    
+    logger = logging.getLogger('mq.Worker')
+    logger.setLevel(logging.INFO)
+    hdlr = StreamHandler()
+    logger.addHandler(hdlr)
+
     config = config_dict(args.config)
     tags = args.tags or config.get('TAGS', ())
     queues = args.queues or config.get('QUEUES', ())
