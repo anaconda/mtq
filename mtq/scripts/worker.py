@@ -6,12 +6,11 @@ Created on Aug 1, 2013
 from argparse import ArgumentParser
 from bson.objectid import ObjectId
 from mtq.connection import MTQConnection
-config = {}
+from mtq.utils import config_dict
+
 
 def aux(args):
-    if args.config:
-        execfile(args.config, config, config)
-    
+    config = config_dict(args.config)
     tags = args.tags or config.get('TAGS', ())
     queues = args.queues or config.get('QUEUES', ())
     

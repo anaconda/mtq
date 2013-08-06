@@ -40,7 +40,18 @@ class Job(object):
     @property
     def func(self):
         'a callable function for workers to execute'
-        return import_string(self.doc['execute']['func_str'])
+        
+        if self.func_name in self.factory._task_map:
+            return self.factory._task_map[self.func_name]
+        
+        return import_string(self.func_name)
+    
+    @property
+    def call_str(self):
+        args = [repr(arg) for arg in self.args]
+        args.extend('%s=%r' %item for item in self.kwargs.items())
+        args = ', '.join(args)
+        return '%s(%s)' %(self.func_name, args)
     
     @property
     def args(self):

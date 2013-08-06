@@ -41,6 +41,7 @@ class Worker(object):
         self._pre_call = None
         self._post_call = None
         
+        
     
     @contextmanager
     def register(self):
@@ -110,6 +111,7 @@ class Worker(object):
                 continue
             
             self.logger.info('Popped Job _id=%s queue=%s tags=%s' % (job.id, job.qname, ', '.join(job.tags)))
+            self.logger.info(job.call_str)
             failed = self.process_job(job)
             job.set_finished(failed)
             
@@ -210,5 +212,5 @@ class WorkerProxy(object):
         cursor = coll.find({'_id':self.id, 'working':False})
         return bool(cursor.count())
 
-
+    
     

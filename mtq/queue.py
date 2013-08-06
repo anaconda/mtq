@@ -6,7 +6,7 @@ Created on Aug 2, 2013
 from bson.objectid import ObjectId
 from datetime import datetime
 from mtq.job import Job
-from mtq.utils import now
+from mtq.utils import now, is_str
 
 class QueueError(Exception):
     pass
@@ -20,17 +20,11 @@ class Queue(object):
     def __str__(self):
         return self.name
         
-    def __init__(self, factory, name='default', tags=(), priority=0):
+    def __init__(self, factory, name=u'default', tags=(), priority=0):
         
-        if not isinstance(name, str):
-            raise TypeError('name must be a string')
-        
-        if not isinstance(tags, (list, tuple)):
-            raise TypeError('tags must be sequence')
-        
-        self.name = name
+        self.name = name or u'default'
         self.factory = factory
-        self.tags = tuple(tags)
+        self.tags = tuple(tags) if tags else ()
         self.priority = priority
         
 
@@ -55,7 +49,7 @@ class Queue(object):
         and kwargs as explicit arguments.  Any kwargs passed to this function
         contain options for MQ itself.
         '''
-        if not isinstance(func_or_str, str):
+        if not is_str(func_or_str):
             name = getattr(func_or_str, '__name__', None)
             module = getattr(func_or_str, '__module__', None)
             
@@ -134,7 +128,7 @@ class Queue(object):
         'Number of pending jobs in this queue with this tag'
         collection = self.factory.queue_collection
         
-        if not isinstance(tags, (list,tuple)):
+        if not isinstance(tags, (list, tuple)):
             tags = [tags]
         query = {'qname':self.name, 'processed':False}
         query.update(self.factory.make_tag_query(tags))

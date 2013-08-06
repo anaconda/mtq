@@ -13,7 +13,13 @@ from dateutil.tz import tzlocal
 class ImportStringError(Exception):
     pass
 
-
+def is_str(obj):
+    if sys.version_info.major >= 3:
+        return isinstance(obj, str)
+    else:
+        return isinstance(obj, basestring)
+        
+    
 def handle_signals():
     '''
     Handle signals in multiprocess.Process threads
@@ -99,4 +105,12 @@ def setup_logging(worker_id, job_id, collection):
 def now():
     return datetime.now(tzlocal())    
     
+
+def config_dict(filename):
+    config = {}
+    if filename:
+        execfile(filename, config, config)
+    return config
+
+
 

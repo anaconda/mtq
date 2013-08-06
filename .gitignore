@@ -1,2 +1,11 @@
 *.pyc
 *.log
+__pycache__
+*.egg-info
+*.tar.gz
+config.py
+docs/_build
+enqueue.py
+get-pip.py
+distribute_setup.py
+dist/

@@ -5,7 +5,8 @@ Created on Aug 2, 2013
 '''
 import mtq
 from pymongo.mongo_client import MongoClient
-from mtq.defaults import _collection_base, _qsize, _workersize, _logsize
+from mtq.defaults import _collection_base, _qsize, _workersize, _logsize,\
+    _task_map
 from mtq.utils import ensure_capped_collection, now
 
 class MTQConnection(object):
@@ -28,7 +29,12 @@ class MTQConnection(object):
         self.qsize = qsize
         self.workersize = workersize 
         self.logsize = logsize
+        self._task_map = _task_map.copy()
     
+    def _destroy(self):
+        'Destroy ALL data'
+        self.db.connection.drop_database(self.db)
+        
     @classmethod
     def default(cls):
         '''
@@ -87,6 +93,13 @@ class MTQConnection(object):
         db = self.db
         collection_name = '%s.log' % self.collection_base
         return ensure_capped_collection(db, collection_name, self.logsize)
+
+    @property
+    def schedule_collection(self):
+        'The collection to push log lines to'
+        db = self.db
+        collection_name = '%s.schedule' % self.collection_base
+        return db[collection_name]
 
     def make_query(self, queues, tags, priority=0):
         '''
@@ -208,3 +221,11 @@ class MTQConnection(object):
         return mtq.WorkerProxy(self, doc)
     
 
+    #===========================================================================
+    # Scheduler
+    #===========================================================================
+    
+    def scheduler(self):
+        return mtq.Scheduler(self)
+    
+    
