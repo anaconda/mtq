@@ -1,7 +1,7 @@
 Mongo Task Queue (mtq)
 ========================
 
-[![Build status](https://secure.travis-ci.org/srossross/mtq.png?branch=master)](https://secure.travis-ci.org/srossross/mtq)
+[![Build status][mtq.png]][travis]
 
 
 
@@ -70,6 +70,8 @@ Simply use the following command to install the latest released version:
     pip install mtq
 
 
+[mtq.png]: https://secure.travis-ci.org/srossross/mtq.png?branch=master
+[travis]: https://secure.travis-ci.org/srossross/mtq
 [m]: http://www.mongodb.org/
 [d]: http://example.com
 
