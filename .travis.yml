@@ -10,7 +10,6 @@ install:
 # command to run tests
 script: 
   - python mtq/tests/runtests.py
-  - coverage report
   
 after_success:
   - pip install coveralls
