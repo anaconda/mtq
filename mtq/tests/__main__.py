@@ -16,7 +16,7 @@ def main():
     runner = unittest.TextTestRunner()
     runner.run(tests) 
     cov.stop()
-    cov.save()
+    cov.report(omit=['**/site-packages/**', '**/tests/**'])
     cov.html_report(omit=['**/site-packages/**', '**/tests/**'])
 
 if __name__ == '__main__':

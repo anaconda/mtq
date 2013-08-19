@@ -1,18 +1,23 @@
 '''
-Created on Aug 19, 2013
+Created on Aug 5, 2013
 
 @author: sean
 '''
-import sys
-from os.path import dirname
 import unittest
+from os.path import dirname
 
-def runtests():
+def main():
+    import coverage
+    cov = coverage.coverage()
+    cov.start()
+    
     loader = unittest.loader.TestLoader()
     tests = loader.discover(dirname(__file__))
     runner = unittest.TextTestRunner()
-    failed = runner.run(tests)
-    sys.exit(failed)
-    
+    runner.run(tests) 
+    cov.stop()
+    cov.report(omit=['**/site-packages/**', '**/tests/**'])
+    cov.html_report(omit=['**/site-packages/**', '**/tests/**'])
+
 if __name__ == '__main__':
-    runtests()
+    main()
