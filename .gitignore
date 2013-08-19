@@ -9,3 +9,5 @@ enqueue.py
 get-pip.py
 distribute_setup.py
 dist/
+.coverage
+htmlcov

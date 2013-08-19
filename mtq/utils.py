@@ -21,6 +21,12 @@ def is_str(obj):
     else:
         return isinstance(obj, basestring)
         
+def is_unicode(obj):
+    if sys.version_info.major >= 3:
+        return isinstance(obj, str)
+    else:
+        return isinstance(obj, unicode)
+        
     
 def handle_signals():
     '''
@@ -54,7 +60,7 @@ def import_string(import_name, silent=False):
     :return: imported object
     """
     # force the import name to automatically convert to strings
-    if isinstance(import_name, unicode):
+    if is_unicode(import_name):
         import_name = str(import_name)
     try:
         if ':' in import_name:
@@ -65,7 +71,7 @@ def import_string(import_name, silent=False):
             return __import__(import_name)
         # __import__ is not able to handle unicode strings in the fromlist
         # if the module is a package
-        if isinstance(obj, unicode):
+        if is_unicode(obj):
             obj = obj.encode('utf-8')
         try:
             return getattr(__import__(module, None, None, [obj]), obj)
