@@ -6,7 +6,7 @@ Created on Aug 2, 2013
 from contextlib import contextmanager
 from datetime import datetime
 from mtq.log import StreamHandler, MongoStream, MongoHandler
-from mtq.utils import handle_signals, setup_logging, now
+from mtq.utils import handle_signals, setup_logging, now, is_py3
 from multiprocessing import Process
 import logging
 import os
@@ -99,7 +99,7 @@ class Worker(object):
         Start the main loop and process jobs
         '''
         self.logger.info('Starting Main Loop worker=%s _id=%s' % (self.name, self.worker_id))
-        self.logger.info('Listening for jobs queues=[%s] tags=[%s]' %(', '.join(self.queues), ', '.join(self.tags)))
+        self.logger.info('Listening for jobs queues=[%s] tags=[%s]' % (', '.join(self.queues), ', '.join(self.tags)))
         while 1:
             
             job = self.factory.pop_item(worker_id=self.worker_id,
@@ -115,7 +115,7 @@ class Worker(object):
             
             if one: break
             
-            self.logger.info('Listening for jobs queues=[%s] tags=[%s]' %(', '.join(self.queues), ', '.join(self.tags)))
+            self.logger.info('Listening for jobs queues=[%s] tags=[%s]' % (', '.join(self.queues), ', '.join(self.tags)))
             
         self.logger.info('Exiting Main Loop')
     
@@ -155,9 +155,12 @@ class Worker(object):
         if self._log_worker_output:
             setup_logging(self.worker_id, job.id, self.factory.logging_collection, self.silence)
         elif self.silence:
-            sys.stderr = io.BytesIO()
-            sys.stdout = io.BytesIO()
-            
+            if is_py3():
+                sys.stderr = io.StringIO()
+                sys.stdout = io.StringIO()
+            else:
+                sys.stderr = io.BytesIO()
+                sys.stdout = io.BytesIO()
         
         logger = logging.getLogger('job')
         logger.info('Starting Job %s' % job.id)

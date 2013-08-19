@@ -15,14 +15,15 @@ from bson.objectid import ObjectId
 class ImportStringError(Exception):
     pass
 
+is_py3 = lambda: sys.version_info.major >= 3
 def is_str(obj):
-    if sys.version_info.major >= 3:
+    if is_py3():
         return isinstance(obj, str)
     else:
         return isinstance(obj, basestring)
         
 def is_unicode(obj):
-    if sys.version_info.major >= 3:
+    if is_py3():
         return isinstance(obj, str)
     else:
         return isinstance(obj, unicode)
@@ -71,7 +72,7 @@ def import_string(import_name, silent=False):
             return __import__(import_name)
         # __import__ is not able to handle unicode strings in the fromlist
         # if the module is a package
-        if is_unicode(obj):
+        if is_unicode(obj) and not is_py3():
             obj = obj.encode('utf-8')
         try:
             return getattr(__import__(module, None, None, [obj]), obj)

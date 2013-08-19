@@ -5,13 +5,11 @@ Created on Aug 5, 2013
 '''
 
 from mtq.tests.fixture import MTQTestCase 
-import mtq.tests.fixture
-from mtq.utils import now
+import mtq
 import unittest
-from mtq.queue import QueueError
 import mock
 
-class TestQueue(MTQTestCase):
+class TestWorker(MTQTestCase):
     
     def test_create_worker(self):
         worker = self.factory.new_worker(['q1', 'q2'], ['t1', 't2'])

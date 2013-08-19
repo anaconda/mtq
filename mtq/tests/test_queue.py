@@ -71,14 +71,14 @@ class TestQueue(MTQTestCase):
     def test_is_empty(self):
         """Detecting empty queues."""
         q = self.factory.queue('example')
-        self.assertEquals(q.is_empty(), True)
+        self.assertEqual(q.is_empty(), True)
 
         self.factory.queue_collection.insert({'qname':'example',
                                               'process_after': now(),
                                               'priority': 0,
                                               'processed':False
                                               })
-        self.assertEquals(q.is_empty(), False)
+        self.assertEqual(q.is_empty(), False)
 
     def test_all_tags(self):
         
