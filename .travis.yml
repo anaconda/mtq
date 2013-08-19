@@ -8,4 +8,11 @@ install:
   - "pip install . --use-mirrors"
   - "pip install -r requirements.txt --use-mirrors"
 # command to run tests
-script: python -m unittest discover -v
+script: 
+	- python -m unittest discover -v
+
+after_success:
+  - pip install coveralls
+  - coverage run --source=mtq mtq/tests/runtests.py
+  - coveralls
+

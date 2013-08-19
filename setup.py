@@ -15,7 +15,7 @@ setup(
     install_requires=['pymongo==2.5.2',
                       'python-dateutil==2.1',
                       ],
-
+      
     entry_points={
           'console_scripts': [
               'mtq-worker = mtq.scripts.worker:main',
