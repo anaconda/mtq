@@ -2,7 +2,7 @@ Mongo Task Queue (mtq)
 ========================
 
 [![Build status][mtq.png]][travis]
-[![Coverage Status](coveralls.png)](coveralls)
+[![Coverage Status][coveralls.png]][coveralls]
 
 
 mtq is a simple Python library for queueing jobs and processing them in the background with workers. 
