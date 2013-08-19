@@ -3,6 +3,7 @@ Created on Aug 5, 2013
 
 @author: sean
 '''
+from __future__ import print_function
 import unittest
 from os.path import dirname
 
@@ -10,7 +11,8 @@ def main():
     import coverage
     cov = coverage.coverage(omit=['**/site-packages/**', '**/tests/**'])
     cov.start()
-    
+    import mtq
+    print(mtq)
     loader = unittest.loader.TestLoader()
     tests = loader.discover(dirname(__file__))
     runner = unittest.TextTestRunner()
