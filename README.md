@@ -2,7 +2,7 @@ Mongo Task Queue (mtq)
 ========================
 
 [![Build status][mtq.png]][travis]
-
+[![Coverage Status](coveralls.png)](coveralls)
 
 
 mtq is a simple Python library for queueing jobs and processing them in the background with workers. 
@@ -72,6 +72,10 @@ Simply use the following command to install the latest released version:
 
 [mtq.png]: https://secure.travis-ci.org/srossross/mtq.png?branch=master
 [travis]: https://secure.travis-ci.org/srossross/mtq
+
+[coveralls.png]: https://coveralls.io/repos/srossross/mtq/badge.png?branch=master
+[coveralls]: https://coveralls.io/r/srossross/mtq?branch=master
+
 [m]: http://www.mongodb.org/
 [d]: http://example.com
 

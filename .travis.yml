@@ -14,5 +14,6 @@ script:
 after_success:
   - pip install coveralls
   - coverage run --source=mtq mtq/tests/runtests.py
+  - coverage report
   - coveralls
 
