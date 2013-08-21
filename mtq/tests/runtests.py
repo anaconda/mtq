@@ -9,7 +9,7 @@ from os.path import dirname
 
 def main():
     import coverage
-    cov = coverage.coverage(omit=['**/site-packages/**', '**/tests/**'])
+    cov = coverage.coverage(include='**/mtq/**', omit=['**/tests/**'])
     cov.start()
     import mtq
     print(mtq)
