@@ -8,6 +8,7 @@ from mtq.connection import MTQConnection
 from mtq.log import StreamHandler
 from mtq.utils import config_dict, object_id
 import logging
+logger = logging.getLogger('worker')
 
 def aux(args):
     
@@ -17,10 +18,14 @@ def aux(args):
     logger.addHandler(hdlr)
 
     config = config_dict(args.config)
-    tags = args.tags or config.get('TAGS', ())
-    queues = args.queues or config.get('QUEUES', ())
     
-    factory = MTQConnection.from_config(config)
+    tags = config.get('TAGS', ()) or args.tags
+    queues = config.get('QUEUES', ()) or args.queues
+    
+    if 'connection' in config:
+        factory = config['connection']
+    else:
+        factory = MTQConnection.from_config(config)
     
     worker = factory.new_worker(queues=queues, tags=tags, log_worker_output=args.log_output)
     
@@ -47,7 +52,7 @@ def main():
     parser = ArgumentParser(description=__doc__, version='0.0')
     parser.add_argument('queues', nargs='*', default=['default'], help='The queues to listen on (default: %(default)r)')
     parser.add_argument('-r', '--reloader', action='store_true', help='Reload the worker when it detects a change')
-    parser.add_argument('-t', '--tags', nargs='*', help='only process jobs which contain all of the tags')
+    parser.add_argument('-t', '--tags', nargs='*', help='only process jobs which contain all of the tags', default=[])
     parser.add_argument('-c', '--config', help='Python module containing MTQ settings.')
     parser.add_argument('-l', '--log-output', action='store_true', help='Store job and woker ouput in the db, seealso mtq-tail')
     parser.add_argument('-1', '--one', action='store_true',

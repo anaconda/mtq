@@ -98,6 +98,8 @@ class Worker(object):
         '''
         Start the main loop and process jobs
         '''
+        self.logger.info('Starting Main Loop mogno-host=%s mongo-db=%s' % (self.factory.db.connection.host, 
+                                                                           self.factory.db.name))
         self.logger.info('Starting Main Loop worker=%s _id=%s' % (self.name, self.worker_id))
         self.logger.info('Listening for jobs queues=[%s] tags=[%s]' % (', '.join(self.queues), ', '.join(self.tags)))
         while 1:

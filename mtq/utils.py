@@ -118,7 +118,7 @@ def now():
 def config_dict(filename):
     config = {}
     if filename:
-        execfile(filename, config, config)
+        return vars(import_string(filename))
     return config
 
 
