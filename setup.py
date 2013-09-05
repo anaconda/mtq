@@ -20,6 +20,7 @@ setup(
               'mtq-worker = mtq.scripts.worker:main',
               'mtq-info = mtq.scripts.info:main',
               'mtq-tail = mtq.scripts.log:main',
+              'mtq-scheduler = mtq.scripts.schedule:main',
               ]
                  },
 

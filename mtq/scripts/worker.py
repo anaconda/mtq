@@ -22,10 +22,7 @@ def aux(args):
     tags = config.get('TAGS', ()) or args.tags
     queues = config.get('QUEUES', ()) or args.queues
     
-    if 'connection' in config:
-        factory = config['connection']
-    else:
-        factory = MTQConnection.from_config(config)
+    factory = MTQConnection.from_config(config)
     
     worker = factory.new_worker(queues=queues, tags=tags, log_worker_output=args.log_output)
     
