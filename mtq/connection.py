@@ -56,7 +56,10 @@ class MTQConnection(object):
         '''
         if config is None:
             config = {}
-            
+
+        if 'connection' in config:
+            return config['connection']
+
         if client is None:
             client = MongoClient(config.get('DB_HOST', 'mongodb://localhost/?journal=true'))
         
