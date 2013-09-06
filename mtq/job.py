@@ -49,9 +49,9 @@ class Job(object):
     @property
     def call_str(self):
         args = [repr(arg) for arg in self.args]
-        args.extend('%s=%r' %item for item in self.kwargs.items())
+        args.extend('%s=%r' % item for item in self.kwargs.items())
         args = ', '.join(args)
-        return '%s(%s)' %(self.func_name, args)
+        return '%s(%s)' % (self.func_name, args)
     
     @property
     def args(self):
@@ -73,9 +73,18 @@ class Job(object):
         
         :param failed: if true, this was a failed job
         '''
+        n = now()
+        try:
+            wait_time = self.doc.get('enqueued_at', n) - self.doc.get('started_at', n)
+        except:
+            import pdb;pdb.set_trace()
+            
+        
         update = {'$set':{'processed':True,
                           'failed':failed,
-                          'finsished_at': now()}
+                          'finished':True,
+                          'wait_time': wait_time.total_seconds(),
+                          'finished_at': n}
                   }
         
         self.factory.queue_collection.update({'_id':self.id}, update)
@@ -84,8 +93,8 @@ class Job(object):
         '''
         Get a stream to read log lines from this job  
         '''
-        return MongoStream(self.factory.logging_collection, 
-                           doc={'job_id': self.id}, 
+        return MongoStream(self.factory.logging_collection,
+                           doc={'job_id': self.id},
                            finished=self.finished)
         
     def finished(self):

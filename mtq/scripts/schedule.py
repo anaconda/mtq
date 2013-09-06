@@ -17,7 +17,7 @@ def test_rule(rule_str):
     try:
         _ = rrulestr(rule_str)
     except ValueError as err:
-        raise SystemExit(err.message)
+        raise SystemExit("Bad rule:" + err.message)
 
 
 def pprint_scheduler(scheduler):

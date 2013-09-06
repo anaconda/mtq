@@ -83,10 +83,12 @@ class Queue(object):
                
                'execute': execute,
                'enqueued_at': now(),
-               'started_at': datetime.fromtimestamp(0),
-               'finsished_at': datetime.fromtimestamp(0),
+               'started_at': datetime.utcfromtimestamp(0),
+               'finished_at': datetime.utcfromtimestamp(0),
                'processed': False,
                'failed': False,
+               'finished': False,
+               'wait_time':0.0,
                'timeout':timeout,
                'worker_id': ObjectId('000000000000000000000000'),
                }
@@ -102,6 +104,20 @@ class Queue(object):
         'The number of jobs in this queue (filtering by tags too)'
         collection = self.factory.queue_collection
         query = self.factory.make_query([self.name], self.tags, self.priority)
+        return collection.find(query).count()
+    
+#     @property
+#     def avg_wait_time(self):
+#         collection = self.factory.queue_collection
+#         agg = [{'$group': {'_id': 'all', 'avg_wait_time' : { '$avg' : "$wait_time" }}}]
+#         result = collection.aggregate(agg)['result'][0]
+#         return result
+    
+    @property
+    def num_failed(self):
+        'The number of jobs in this queue (filtering by tags too)'
+        collection = self.factory.queue_collection
+        query = self.factory.make_query([self.name], self.tags, failed=True, processed=None)
         return collection.find(query).count()
     
     def is_empty(self):
@@ -121,6 +137,15 @@ class Queue(object):
     @property
     def jobs(self):
         return self.factory.items([self.name], self.tags, self.priority)
+    
+    @property
+    def finished_jobs(self):
+        return self.factory.items([self.name], self.tags, self.priority,
+                                  processed=True, limit=30, reverse=True)
+    
+    @property
+    def all_jobs(self):
+        return self.factory.items([self.name], self.tags, self.priority, processed=None, limit=30, reverse=True)
         
     
     def tag_count(self, tags):

@@ -112,7 +112,7 @@ def setup_logging(worker_id, job_id, collection, silence=False):
     
     
 def now():
-    return datetime.now(tzlocal())    
+    return datetime.utcnow()    
     
 
 def config_dict(filename):

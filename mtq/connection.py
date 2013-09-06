@@ -104,14 +104,17 @@ class MTQConnection(object):
         collection_name = '%s.schedule' % self.collection_base
         return db[collection_name]
 
-    def make_query(self, queues, tags, priority=0):
+    def make_query(self, queues, tags, priority=0, processed=False, **query):
         '''
         return a mongodb query dict to get the next task in the queue 
         '''
-        query = {'processed':False,
-                 'priority':{'$gte':priority},
-                 'process_after': {'$lte':now()},
-                 }
+        query.update({ 
+                'priority':{'$gte':priority},
+                'process_after': {'$lte':now()},
+                 })
+        
+        if processed is not None:
+            query['processed'] = processed
         if queues:
             if len(queues) == 1:
                 query['qname'] = queues[0]
@@ -133,8 +136,9 @@ class MTQConnection(object):
     def pop_item(self, worker_id, queues, tags, priority=0):
         'Pop an item from the queue'
         
+        n = now()
         update = {'$set':{'processed':True,
-                          'started_at': now(),
+                          'started_at': n,
                           'worker_id':worker_id}
                   }
         
@@ -146,10 +150,15 @@ class MTQConnection(object):
         else:
             return mtq.Job(self, doc)
     
-    def items(self, queues, tags, priority=0):
-        query = self.make_query(queues, tags, priority)
+    def items(self, queues, tags, priority=0, processed=False, limit=None, reverse=False):
+        query = self.make_query(queues, tags, priority, processed=processed)
         cursor = self.queue_collection.find(query)
         
+        if reverse:
+            cursor = cursor.sort('$natural', -1)
+        if limit:
+            cursor = cursor.limit(limit)
+            
         return [mtq.Job(self, doc) for doc in cursor]
     
     def queue(self, name='default', tags=(), priority=0):
