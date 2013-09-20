@@ -74,7 +74,7 @@ class Worker(object):
                                             'working':False
                                             }
                                     })
-        
+    
     def work(self, one=False, batch=False):
         '''
         Main work function
@@ -98,7 +98,7 @@ class Worker(object):
         '''
         Start the main loop and process jobs
         '''
-        self.logger.info('Starting Main Loop mogno-host=%s mongo-db=%s' % (self.factory.db.connection.host, 
+        self.logger.info('Starting Main Loop mogno-host=%s mongo-db=%s' % (self.factory.db.connection.host,
                                                                            self.factory.db.name))
         self.logger.info('Starting Main Loop worker=%s _id=%s' % (self.name, self.worker_id))
         self.logger.info('Listening for jobs queues=[%s] tags=[%s]' % (', '.join(self.queues), ', '.join(self.tags)))
@@ -170,10 +170,13 @@ class Worker(object):
             self._pre(job)
             job.apply()
         except:
+            logger.exception("job %s exited with exception" % (job.id,))
             if self._handler:
                 exc_type, exc_value, traceback = sys.exc_info()
                 self._handler(job, exc_type, exc_value, traceback)
             raise
+        else:
+            logger.info("job %s finished successfully" % (job.id,))
         finally:
             self._post(job)
                 
