@@ -1,9 +1,7 @@
 '''
-Created on Aug 1, 2013
-
-@author: sean
+Print stats on workers, queues and jobs
 '''
-from __future__ import print_function
+from __future__ import print_function, division
 from argparse import ArgumentParser
 from mtq.connection import MTQConnection
 from mtq.utils import config_dict, wait_times, last_job, now, job_stats
@@ -102,19 +100,38 @@ def max_age(arg):
     else:
         return now() - timedelta(0, int(arg))
 
-
+def print_db_stats(factory, args):
+    import pymongo
+    print('PyMongo', pymongo.version)
+    print('Mongo database', factory.db.name)
+    for collection_names in factory.db.collection_names():
+        stats = factory.db.command('collStats', collection_names, scale=1024)
+        if stats.get('capped'):
+            print(" * %(ns)s (%(count)i items)" % stats)
+            print("   Using %(size)s of %(storageSize)s Kb" % stats, 
+                  '%.2f%%' %(100 * stats['size'] / stats['storageSize']),
+                  '(capped)' if stats.get('capped') else '',
+                  )
+            
+        
 def main():
     
     parser = ArgumentParser(description=__doc__, version='0.0')
     parser.add_argument('-c', '--config', help='Python module containing MTQ settings.')
     parser.add_argument('-m', '--max-age',
-                        help='Maximum age of jobs/workers (e.g. 1d) unit may be one of s (seconds), m (minutes), h (hours) or d (days) ',
-                        type=max_age, dest='since',
+                        help='Maximum age of jobs (e.g. 1d) unit may be one of s (seconds), m (minutes), h (hours) or d (days) ',
+                        type=max_age, dest='since', metavar='AGE',
                         default=None)
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('-q', '--queues', action='store_const', const=queue_stats, dest='action')
-    group.add_argument('-w', '--worker', action='store_const', const=worker_stats, dest='action')
-    group.add_argument('-j', '--jobs', action='store_const', const=print_job_stats, dest='action')
+    group.add_argument('-q', '--queues', action='store_const',
+                       const=queue_stats, dest='action',
+                       help='print stats on queues')
+    group.add_argument('-w', '--worker', action='store_const', const=worker_stats, dest='action',
+                       help='print stats on workers')
+    group.add_argument('-j', '--jobs', action='store_const', const=print_job_stats, dest='action',
+                       help='print stats on jobs')
+    group.add_argument('-s', '--storage', '--db', action='store_const', const=print_db_stats, dest='action',
+                       help='print stats on database')
     
     args = parser.parse_args()
     

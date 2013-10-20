@@ -1,13 +1,12 @@
 '''
-Created on Aug 1, 2013
-
-@author: sean
+Starts an MTQ worker.
 '''
 from argparse import ArgumentParser
 from mtq.connection import MTQConnection
 from mtq.log import ColorStreamHandler
 from mtq.utils import config_dict, object_id
 import logging
+import mtq
 logger = logging.getLogger('worker')
 
 def aux(args):
@@ -47,7 +46,7 @@ def aux(args):
     
 
 def main():
-    parser = ArgumentParser(description=__doc__, version='0.0')
+    parser = ArgumentParser(description=__doc__, version='Mongo Task Queue (mtq) v%s' % mtq.__version__)
     parser.add_argument('queues', nargs='*', default=['default'], help='The queues to listen on (default: %(default)r)')
     parser.add_argument('-r', '--reloader', action='store_true', help='Reload the worker when it detects a change')
     parser.add_argument('-p', '--poll-interval', help='Sleep interval to check for jobs', default=3, type=int)

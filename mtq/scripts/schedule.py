@@ -1,13 +1,30 @@
 '''
-Created on Aug 5, 2013
+Run a MTQ schedular or schedule a task
 
-@author: sean
+Schedule rule based on the iCal RFC 
+    * http://labix.org/python-dateutil#head-e987b581aebacf25c7276d3e9214385a12a091f2
+    * http://www.ietf.org/rfc/rfc2445.txt
+
+Examples:
+
+Run a single task now:
+
+ mtq-scheduler --now mymodule.myfunction
+
+Schedule a task to be run every hour:
+
+ mtq-scheduler --add --task mymodule.myfunction --rule 'FREQ=HOURLY' 
+
+Run a schedule server **should only ever be one running!**:
+    
+ mtq-scheduler --serve-forever   
 '''
+
 from __future__ import print_function
-from argparse import ArgumentParser
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from dateutil.rrule import rrulestr
 from bson.objectid import ObjectId
-from mtq.utils import config_dict, shutdown_worker
+from mtq.utils import config_dict
 import mtq
 import logging
 from mtq.log import ColorStreamHandler
@@ -36,19 +53,18 @@ def main():
     hdlr = ColorStreamHandler()
     logger.addHandler(hdlr)
 
-    parser = ArgumentParser()
+    parser = ArgumentParser(description=__doc__, version='Mongo Task Queue (mtq) v%s' % mtq.__version__,
+                            formatter_class=RawDescriptionHelpFormatter)
     parser.add_argument('-c', '--config', help='Python module containing MTQ settings.')
     
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-a', '--add', help='Schedule a new job', action='store_true')
     group.add_argument('-n', '--now', help='Run a job now!', metavar='TASK')
     group.add_argument('--remove', help='Remove a rule', type=ObjectId)
-    group.add_argument('-u', '--update', help='Remove a rule', type=ObjectId)
+    group.add_argument('-u', '--update', help='Update a rule', type=ObjectId)
     group.add_argument('-l', '--list', help='List rules', action='store_true')
     group.add_argument('-s', '--serve-forever', '--run', help='List rules', action='store_true',
                        dest='run')
-    group.add_argument('--shutdown', help='shutdown worker (either all or worker id)')
-    
     parser.add_argument('-r', '--rule', help='Schedule rule based on the iCal RFC (http://www.ietf.org/rfc/rfc2445.txt)')
     parser.add_argument('-t', '--task', help='importable string of the task to be run. Must be a callable object with no arguments')
     parser.add_argument('-q', '--queue', help='name of the queue (default: default)')
@@ -60,16 +76,6 @@ def main():
         
     scheduler = factory.scheduler()
     
-    if args.shutdown:
-        if args.shutdown == 'all':
-            worker_id = None
-            print('Shutting down all workers')
-        else:
-            worker_id = ObjectId(args.shutdown)
-            print('Shutting down worker %s' % worker_id)
-        adsf
-        shutdown_worker(factory, worker_id)
-        
     if args.rule:
         test_rule(args.rule)
         
