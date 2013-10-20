@@ -227,7 +227,7 @@ def shutdown_worker(conn, worker_id=None):
     else:
         query = {'working':True}
         
-    print coll.update(query, {'$set':{'terminate':True}}, multi=True)
+    print(coll.update(query, {'$set':{'terminate':True}}, multi=True))
 
 def last_job(conn, worker_id):
     coll = conn.queue_collection
