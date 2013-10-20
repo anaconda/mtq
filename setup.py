@@ -21,6 +21,7 @@ setup(
               'mtq-info = mtq.scripts.info:main',
               'mtq-tail = mtq.scripts.log:main',
               'mtq-scheduler = mtq.scripts.schedule:main',
+              'mtq-ctrl = mtq.scripts.ctrl:main',
               ]
                  },
 

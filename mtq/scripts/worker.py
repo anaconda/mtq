@@ -5,7 +5,7 @@ Created on Aug 1, 2013
 '''
 from argparse import ArgumentParser
 from mtq.connection import MTQConnection
-from mtq.log import StreamHandler
+from mtq.log import ColorStreamHandler
 from mtq.utils import config_dict, object_id
 import logging
 logger = logging.getLogger('worker')
@@ -14,7 +14,7 @@ def aux(args):
     
     logger = logging.getLogger('mq.Worker')
     logger.setLevel(logging.INFO)
-    hdlr = StreamHandler()
+    hdlr = ColorStreamHandler()
     logger.addHandler(hdlr)
 
     config = config_dict(args.config)
@@ -24,7 +24,8 @@ def aux(args):
     
     factory = MTQConnection.from_config(config)
     
-    worker = factory.new_worker(queues=queues, tags=tags, log_worker_output=args.log_output)
+    worker = factory.new_worker(queues=queues, tags=tags, log_worker_output=args.log_output, 
+                                poll_interval=args.poll_interval)
     
     if config.get('exception_handler'):
         worker.push_exception_handler(config['exception_handler'])
@@ -49,6 +50,7 @@ def main():
     parser = ArgumentParser(description=__doc__, version='0.0')
     parser.add_argument('queues', nargs='*', default=['default'], help='The queues to listen on (default: %(default)r)')
     parser.add_argument('-r', '--reloader', action='store_true', help='Reload the worker when it detects a change')
+    parser.add_argument('-p', '--poll-interval', help='Sleep interval to check for jobs', default=3, type=int)
     parser.add_argument('-t', '--tags', nargs='*', help='only process jobs which contain all of the tags', default=[])
     parser.add_argument('-c', '--config', help='Python module containing MTQ settings.')
     parser.add_argument('-l', '--log-output', action='store_true', help='Store job and woker ouput in the db, seealso mtq-tail')

@@ -73,26 +73,9 @@ class Queue(object):
         
         if priority is None:
             priority = self.priority
-             
-        doc = {
-               'qname':self.name,
-               'tags': self.tags + tuple(tags),
-               
-               'process_after': now(),
-               'priority': priority,
-               
-               'execute': execute,
-               'enqueued_at': now(),
-               'started_at': datetime.utcfromtimestamp(0),
-               'finished_at': datetime.utcfromtimestamp(0),
-               'processed': False,
-               'failed': False,
-               'finished': False,
-               'wait_time':0.0,
-               'timeout':timeout,
-               'worker_id': ObjectId('000000000000000000000000'),
-               }
-    
+        
+        tags = self.tags + tuple(tags)
+        doc = Job.new(self.name, tags, priority, execute, timeout)
         collection = self.factory.queue_collection
         collection.insert(doc)
         
@@ -105,13 +88,6 @@ class Queue(object):
         collection = self.factory.queue_collection
         query = self.factory.make_query([self.name], self.tags, self.priority)
         return collection.find(query).count()
-    
-#     @property
-#     def avg_wait_time(self):
-#         collection = self.factory.queue_collection
-#         agg = [{'$group': {'_id': 'all', 'avg_wait_time' : { '$avg' : "$wait_time" }}}]
-#         result = collection.aggregate(agg)['result'][0]
-#         return result
     
     @property
     def num_failed(self):

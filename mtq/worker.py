@@ -5,8 +5,8 @@ Created on Aug 2, 2013
 '''
 from contextlib import contextmanager
 from datetime import datetime
-from mtq.log import StreamHandler, MongoStream, MongoHandler
-from mtq.utils import handle_signals, setup_logging, now, is_py3
+from mtq.log import MongoStream, MongoHandler, add_all, remove_all
+from mtq.utils import handle_signals, now, stream_logging, setup_logging2
 from multiprocessing import Process
 import logging
 import os
@@ -14,15 +14,16 @@ import sys
 import time
 import io
 
+
 class Worker(object):
     '''
     Should create a worker from MTQConnection.new_worker
     '''
     def __init__(self, factory, queues=(), tags=(), priority=0,
                  poll_interval=1, exception_handler=None,
-                 log_worker_output=False, silence=False):
-        
+                 log_worker_output=False, silence=False, extra_lognames=()):
         self.name = '%s.%s' % (os.uname()[1], os.getpid())
+        self.extra_lognames = extra_lognames
         
         self.queues = queues
         self.tags = tags
@@ -41,6 +42,7 @@ class Worker(object):
         self.silence = silence
         
         
+    worker_id = '-'
     
     @contextmanager
     def register(self):
@@ -55,26 +57,38 @@ class Worker(object):
         self.collection = self.factory.worker_collection
         
         self.worker_id = self.collection.insert({'name': self.name,
+                                                 'host': os.uname()[1],
+                                                 'pid': os.getgid(),
+                                                 'user': os.getlogin(),
                                                  'started':now(),
                                                  'finished':datetime.fromtimestamp(0),
+                                                 'check-in':datetime.fromtimestamp(0),
                                                  'working':True,
                                                  'queues': self.queues,
                                                  'tags': self.tags,
                                                  'log_output': bool(self._log_worker_output),
+                                                 'terminate': False,
                                                  })
-
-        hdlr = MongoHandler(self.factory.logging_collection, {'worker_id':self.worker_id})
-        self.logger.addHandler(hdlr)
+        if self._log_worker_output:
+            hdlr = MongoHandler(self.factory.logging_collection, {'worker_id':self.worker_id})
+            self.logger.addHandler(hdlr)
         try:
             yield self.worker_id
         finally:
-            self.logger.removeHandler(hdlr)
-            self.collection.update({'_id': self.worker_id},
-                                   {'$set':{'finished':now(),
-                                            'working':False
-                                            }
-                                    })
+            if self._log_worker_output:
+                self.logger.removeHandler(hdlr)
+                
+            query = {'_id': self.worker_id}
+            update = {'$set':{'finished':now(), 'working':False}}
+            self.collection.update(query, update)
     
+    def check_in(self):
+        
+        query = {'_id': self.worker_id}
+        update = {'$set':{'check-in':now(), 'working':True}}
+        worker_info = self.collection.find_and_modify(query, update)
+        return worker_info and worker_info.get('terminate', False)
+
     def work(self, one=False, batch=False):
         '''
         Main work function
@@ -102,7 +116,12 @@ class Worker(object):
                                                                            self.factory.db.name))
         self.logger.info('Starting Main Loop worker=%s _id=%s' % (self.name, self.worker_id))
         self.logger.info('Listening for jobs queues=[%s] tags=[%s]' % (', '.join(self.queues), ', '.join(self.tags)))
+        
         while 1:
+            should_exit = self.check_in()
+            if should_exit:
+                self.logger.info("Shutdown Requested (from DB)")
+                break
             
             job = self.factory.pop_item(worker_id=self.worker_id,
                                         queues=self.queues,
@@ -154,32 +173,17 @@ class Worker(object):
         '''
         handle_signals()
         
-        if self._log_worker_output:
-            setup_logging(self.worker_id, job.id, self.factory.logging_collection, self.silence)
-        elif self.silence:
-            if is_py3():
-                sys.stderr = io.StringIO()
-                sys.stdout = io.StringIO()
-            else:
-                sys.stderr = io.BytesIO()
-                sys.stdout = io.BytesIO()
-        
-        logger = logging.getLogger('job')
-        logger.info('Starting Job %s' % job.id)
-        try:
-            self._pre(job)
-            job.apply()
-        except:
-            logger.exception("job %s exited with exception" % (job.id,))
-            if self._handler:
-                exc_type, exc_value, traceback = sys.exc_info()
-                self._handler(job, exc_type, exc_value, traceback)
-            raise
-        else:
-            logger.info("job %s finished successfully" % (job.id,))
-        finally:
-            self._post(job)
-                
+        with setup_logging2(self.worker_id, job.id, lognames=self.extra_lognames):
+            try:
+                self._pre(job)
+                job.apply()
+            except:
+                if self._handler:
+                    exc_type, exc_value, traceback = sys.exc_info()
+                    self._handler(job, exc_type, exc_value, traceback)
+                raise
+            finally:
+                self._post(job)
     
     def _pre(self, job):
         if self._pre_call: self._pre_call(job)
@@ -221,9 +225,19 @@ class WorkerProxy(object):
         
     @property
     def num_processed(self):
-        collection = self.factory.worker_collection
+        collection = self.factory.queue_collection
         return collection.find({'worker_id': self.id}).count()
     
+    @property
+    def num_backlog(self):
+        return self.factory._items_cursor(queues=self.qnames,
+                                          tags=self.tags,
+                                          ).count()
+    
+    @property
+    def last_check_in(self):
+        return self.doc.get('check-in', datetime.utcfromtimestamp(0))
+        
     def stream(self):
         collection = self.factory.logging_collection
         

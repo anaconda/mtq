@@ -8,9 +8,10 @@ import traceback
 import sys
 import logging
 from datetime import datetime
-from dateutil.tz import tzlocal
 from bson.errors import InvalidId
 from bson.objectid import ObjectId
+from contextlib import contextmanager
+import io
 
 class ImportStringError(Exception):
     pass
@@ -95,7 +96,53 @@ def ensure_capped_collection(db, collection_name, size_mb):
 
     return db[collection_name]
 
-def setup_logging(worker_id, job_id, collection, silence=False):
+
+@contextmanager
+def stream_logging(silence=False):
+    from mtq.log import IOStreamLogger
+    
+    stdout = sys.stdout
+    sys.stdout = IOStreamLogger(sys.stdout, silence)
+    
+    stderr = sys.stderr
+    sys.stderr = IOStreamLogger(sys.stderr, silence)
+    yield sys.stdout, sys.stderr
+    
+    sys.stdout = stdout
+    sys.stderr = stderr
+
+@contextmanager
+def setup_logging2(worker_id, job_id, lognames=()):
+    
+    record = io.BytesIO()
+    hndlr = logging.StreamHandler(record)
+    hndlr.setLevel(logging.INFO)
+    
+    logger = logging.getLogger('job')
+    
+    
+    hndlr = logging.StreamHandler(sys.stderr)
+    hndlr.setLevel(logging.ERROR)
+    logger.addHandler(hndlr)
+
+    logger.setLevel(logging.INFO)
+    loggers = [logger] + [logging.getLogger(name) for name in lognames]
+    
+    [logger.addHandler(hndlr) for logger in loggers]
+    
+    logger.info('Starting Job %s' % job_id)
+    
+    try:
+        yield loggers
+    except:
+        logger.exception("job %s exited with exception:\nJob Log:\n%s\n-----\n" % (job_id, record.getvalue(),))
+        raise
+    else:
+        logger.info("job %s finished successfully" % (job_id,))
+    finally:
+        [logger.removeHandler(hndlr) for logger in loggers]
+
+def setup_logging(worker_id, job_id, silence=False):
     '''
     set up logging for worker
     '''
@@ -128,3 +175,69 @@ def object_id(oid):
         return ObjectId(oid)
     except InvalidId:
         raise TypeError()
+
+
+def wait_times(conn):
+    coll = conn.queue_collection
+    wait = { '$avg': { '$subtract':['$started_at_', '$enqueued_at_'] } }
+    raw = coll.aggregate([{'$match':{'processed':True}}, {'$group':{'_id':'$qname', 'wait': wait } } ])
+    result = raw['result']
+    return {item['_id']:item['wait'] for item in result}
+
+def job_stats(conn, group_by='$execute.func_str', since=None):
+    coll = conn.queue_collection
+    duration = { '$avg': { '$subtract':['$finished_at_', '$started_at_'] } }
+    wait = { '$avg': { '$subtract':['$started_at_', '$enqueued_at_'] } }
+    count = {'$sum': 1}
+    failed = {'$sum': {'$cmp':['$failed', False]}}
+    queues = {'$addToSet': '$qname'}
+    tags = {'$addToSet': '$push'}
+    erliest = {'$min': '$finished_at'}
+    latest = {'$max': '$finished_at'}
+    
+    match = {'$match':{'finished':True}}
+    
+    if since:
+        match['$match']['finished_at'] = {'$gt':since}
+    
+    raw = coll.aggregate([match, {'$group':{'_id':group_by,
+                                           'duration': duration,
+                                           'wait_in_queue': wait,
+                                           'count': count,
+                                           'queues': queues,
+                                           'tags': tags,
+                                           'failed':failed,
+                                           'latest':latest,
+                                           'erliest':erliest,
+                                            } } 
+                          ])
+    
+    result = raw['result']
+    
+    return {item.pop('_id'):item for item in result}
+    
+    
+    
+    
+def shutdown_worker(conn, worker_id=None):
+    coll = conn.worker_collection
+    query = {}
+    if worker_id:
+        query['_id'] = worker_id
+    else:
+        query = {'working':True}
+        
+    print coll.update(query, {'$set':{'terminate':True}}, multi=True)
+
+def last_job(conn, worker_id):
+    coll = conn.queue_collection
+    cursor = coll.find({'worker_id': worker_id}).sort('$natural', -1)
+    doc = next(cursor, None)
+    
+    if doc:
+        from mtq.job import Job
+        return Job(conn, doc)
+    
+
+
+

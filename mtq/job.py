@@ -5,6 +5,9 @@ Created on Aug 2, 2013
 '''
 from mtq.utils import import_string, now
 from mtq.log import MongoStream
+from datetime import datetime
+from bson.objectid import ObjectId
+from time import mktime
 
 class Job(object):
     '''
@@ -54,6 +57,14 @@ class Job(object):
         return '%s(%s)' % (self.func_name, args)
     
     @property
+    def enqueued(self):
+        return self.doc['enqueued_at']
+    
+    @property
+    def started(self):
+        return self.doc['started_at']
+    
+    @property
     def args(self):
         'The arguments to call func with'
         return self.doc['execute']['args']
@@ -74,17 +85,13 @@ class Job(object):
         :param failed: if true, this was a failed job
         '''
         n = now()
-        try:
-            wait_time = self.doc.get('enqueued_at', n) - self.doc.get('started_at', n)
-        except:
-            import pdb;pdb.set_trace()
-            
         
         update = {'$set':{'processed':True,
                           'failed':failed,
                           'finished':True,
-                          'wait_time': wait_time.total_seconds(),
-                          'finished_at': n}
+                          'finished_at': n,
+                          'finished_at_': mktime(n.timetuple())
+                          }
                   }
         
         self.factory.queue_collection.update({'_id':self.id}, update)
@@ -107,4 +114,33 @@ class Job(object):
     
     def cancel(self):
         self.set_finished()
+
+    
+    @classmethod
+    def new(cls, name, tags, priority, execute, timeout):
+        
+        n = now()
+        no = mktime(n.timetuple())
+        return {
+               'qname':name,
+               'tags': tags,
+               'process_after': n,
+               'priority': priority,
+               
+               'execute': execute,
+               'enqueued_at': n,
+               'enqueued_at_': no,
+               'started_at': datetime.utcfromtimestamp(0),
+               'started_at_': 0.0,
+               'finished_at': datetime.utcfromtimestamp(0),
+               'finished_at_': 0.0,
+               'processed': False,
+               'failed': False,
+               'finished': False,
+               'timeout':timeout,
+               'worker_id': ObjectId('000000000000000000000000'),
+               }
+    
+    
+    
      

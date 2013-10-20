@@ -19,7 +19,8 @@ def create_connection(db,
            collection_base=defaults._collection_base,
            qsize=defaults._qsize,
            workersize=defaults._workersize,
-           logsize=defaults._logsize):
+           logsize=defaults._logsize,
+           extra_lognames=()):
     '''
     Create a new mtq instance to created queues, workers, and jobs
     
@@ -28,7 +29,7 @@ def create_connection(db,
     :param qsize: the size of the capped collection of the queue
 
     '''
-    return MTQConnection(db, collection_base, qsize, workersize, logsize)
+    return MTQConnection(db, collection_base, qsize, workersize, logsize, extra_lognames)
     
 def from_config(config=None, client=None):
     '''

@@ -7,10 +7,10 @@ from __future__ import print_function
 from argparse import ArgumentParser
 from dateutil.rrule import rrulestr
 from bson.objectid import ObjectId
-from mtq.utils import config_dict
+from mtq.utils import config_dict, shutdown_worker
 import mtq
 import logging
-from mtq.log import StreamHandler
+from mtq.log import ColorStreamHandler
 
 
 def test_rule(rule_str):
@@ -33,7 +33,7 @@ def main():
 
     logger = logging.getLogger('mtq')
     logger.setLevel(logging.INFO)
-    hdlr = StreamHandler()
+    hdlr = ColorStreamHandler()
     logger.addHandler(hdlr)
 
     parser = ArgumentParser()
@@ -47,6 +47,7 @@ def main():
     group.add_argument('-l', '--list', help='List rules', action='store_true')
     group.add_argument('-s', '--serve-forever', '--run', help='List rules', action='store_true',
                        dest='run')
+    group.add_argument('--shutdown', help='shutdown worker (either all or worker id)')
     
     parser.add_argument('-r', '--rule', help='Schedule rule based on the iCal RFC (http://www.ietf.org/rfc/rfc2445.txt)')
     parser.add_argument('-t', '--task', help='importable string of the task to be run. Must be a callable object with no arguments')
@@ -59,7 +60,16 @@ def main():
         
     scheduler = factory.scheduler()
     
-    
+    if args.shutdown:
+        if args.shutdown == 'all':
+            worker_id = None
+            print('Shutting down all workers')
+        else:
+            worker_id = ObjectId(args.shutdown)
+            print('Shutting down worker %s' % worker_id)
+        adsf
+        shutdown_worker(factory, worker_id)
+        
     if args.rule:
         test_rule(args.rule)
         

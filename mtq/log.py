@@ -9,7 +9,7 @@ import logging
 import sys
 import time
 
-class StreamHandler(logging.Handler):
+class ColorStreamHandler(logging.Handler):
     '''
     Handler to write to stdout with colored output 
     '''
@@ -103,6 +103,39 @@ class TextIOWrapperSmart(io.TextIOWrapper):
             s = s.decode()
         return io.TextIOWrapper.write(self, s)
 
+class IOStreamLogger(logging.Logger):
+    def __init__(self, stream, silence=False):
+        
+        self.stream_name = name = getattr(stream, 'name', None)
+        logging.Logger.__init__(self, name, level=logging.INFO)
+        self.stream = stream
+        self.silence = silence
+        
+        hdlr = logging.StreamHandler(stream)
+        hdlr.setLevel(logging.INFO)
+        self.addHandler(hdlr)
+        
+    def readable(self):
+        return 'r' in self.stream.mode
+    
+    @property
+    def closed(self):
+        return self.stream.closed
+    
+    def writable(self):
+        return 'w' in self.stream.mode or 'a' in self.stream.mode  
+
+    def seekable(self):
+        return False
+    
+    def write(self, message):
+        self.info(message)
+        return len(message)
+    
+    def flush(self):
+        self.stream.flush()
+    
+
 class MongoStream(object):
     '''
     File like object to read/write to mongodb
@@ -166,4 +199,16 @@ def mstream(collection, doc, stream=None, silence=False):
     return TextIOWrapperSmart(MongoStream(collection, doc, sys.stdout, silence), line_buffering=True)
     
     
+
+def add_all(loggers, handlers):
+    for l in loggers:
+        for h in handlers:
+            l.addHandler(h)
+
+def remove_all(loggers, handlers):
+    for l in loggers:
+        for h in handlers:
+            l.addHandler(h)
+
+
 

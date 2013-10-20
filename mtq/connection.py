@@ -8,6 +8,7 @@ from pymongo.mongo_client import MongoClient
 from mtq.defaults import _collection_base, _qsize, _workersize, _logsize, \
     _task_map
 from mtq.utils import ensure_capped_collection, now
+from time import mktime
 
 class MTQConnection(object):
     '''
@@ -23,13 +24,14 @@ class MTQConnection(object):
     '''
     
     def __init__(self, db, collection_base=_collection_base, qsize=_qsize,
-                 workersize=_workersize, logsize=_logsize):
+                 workersize=_workersize, logsize=_logsize, extra_lognames=()):
         self.db = db
         self.collection_base = collection_base
         self.qsize = qsize
         self.workersize = workersize 
         self.logsize = logsize
         self._task_map = _task_map.copy()
+        self.extra_lognames = extra_lognames
     
     def _destroy(self):
         'Destroy ALL data'
@@ -67,7 +69,7 @@ class MTQConnection(object):
         
         base = config.get('COLLECTION_BASE', _collection_base)
         qsize = config.get('COLLECTION_SIZE', _qsize)
-        return cls(db, base, qsize)
+        return cls(db, base, qsize, extra_lognames=config.get('extra_lognames', ()))
 
     def job_stream(self, job_id):
         '''
@@ -126,7 +128,7 @@ class MTQConnection(object):
     
     def make_tag_query(self, tags):
         'Query for tags'
-        if len(tags) == 0:
+        if not tags:
             return {}
         elif len(tags) == 1:
             return {'tags': tags[0]}
@@ -135,10 +137,10 @@ class MTQConnection(object):
 
     def pop_item(self, worker_id, queues, tags, priority=0):
         'Pop an item from the queue'
-        
         n = now()
         update = {'$set':{'processed':True,
                           'started_at': n,
+                          'started_at_': mktime(n.timetuple()),
                           'worker_id':worker_id}
                   }
         
@@ -150,7 +152,7 @@ class MTQConnection(object):
         else:
             return mtq.Job(self, doc)
     
-    def items(self, queues, tags, priority=0, processed=False, limit=None, reverse=False):
+    def _items_cursor(self, queues, tags, priority=0, processed=False, limit=None, reverse=False):
         query = self.make_query(queues, tags, priority, processed=processed)
         cursor = self.queue_collection.find(query)
         
@@ -159,6 +161,10 @@ class MTQConnection(object):
         if limit:
             cursor = cursor.limit(limit)
             
+        return cursor
+            
+    def items(self, queues, tags, priority=0, processed=False, limit=None, reverse=False):
+        cursor = self._items_cursor(queues, tags, priority, processed, limit, reverse)
         return [mtq.Job(self, doc) for doc in cursor]
     
     def queue(self, name='default', tags=(), priority=0):
@@ -174,7 +180,7 @@ class MTQConnection(object):
     
 
         
-    def new_worker(self, queues=(), tags=(), priority=0, silence=False, log_worker_output=False):
+    def new_worker(self, queues=(), tags=(), priority=0, silence=False, log_worker_output=False, poll_interval=3):
         '''
         Create a worker object
         
@@ -185,7 +191,7 @@ class MTQConnection(object):
         '''
         return mtq.Worker(self, queues, tags, priority,
                          log_worker_output=log_worker_output,
-                         silence=silence)
+                         silence=silence, extra_lognames=self.extra_lognames,poll_interval=poll_interval)
     
     #===========================================================================
     # Workers
