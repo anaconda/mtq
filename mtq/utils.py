@@ -112,11 +112,20 @@ def stream_logging(silence=False):
     sys.stdout = stdout
     sys.stderr = stderr
 
+class UnicodeFormatter(logging.Formatter):
+    def format(self, record):
+        msg =  logging.Formatter.format(self, record)
+        if hasattr(msg, 'decode'):
+            msg = msg.decode()
+        return msg
+         
+
 @contextmanager
 def setup_logging2(worker_id, job_id, lognames=()):
     
-    record = io.StringIO() if is_py3() else io.BytesIO()
+    record = io.StringIO()
     record_hndlr = logging.StreamHandler(record)
+    record_hndlr.setFormatter(UnicodeFormatter())
     record_hndlr.setLevel(logging.INFO)
     
     logger = logging.getLogger('job')
