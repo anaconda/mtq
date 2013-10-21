@@ -50,7 +50,7 @@ def worker_stats(factory, args):
             print('      - Enqueued: %s (%s)' % t(job.enqueued))
             print('      - Started : %s (%s)' % t(job.started))
             
-            if job.doc['finished']:
+            if job.doc.get('finished'):
                 print('      - Finished: %s (%s)' % t(job.doc['finished_at']))
             else:
                 print('      - Finished:  *In-Progress*')
