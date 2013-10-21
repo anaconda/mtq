@@ -3,7 +3,7 @@ Created on Aug 2, 2013
 
 @author: sean
 '''
-from mtq.utils import import_string, now
+from mtq.utils import import_string, now, nulltime
 from mtq.log import MongoStream
 from datetime import datetime
 from bson.objectid import ObjectId
@@ -130,9 +130,9 @@ class Job(object):
                'execute': execute,
                'enqueued_at': n,
                'enqueued_at_': no,
-               'started_at': datetime.utcfromtimestamp(0),
+               'started_at': nulltime(),
                'started_at_': 0.0,
-               'finished_at': datetime.utcfromtimestamp(0),
+               'finished_at': nulltime(),
                'finished_at_': 0.0,
                'processed': False,
                'failed': False,

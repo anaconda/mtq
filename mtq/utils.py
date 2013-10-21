@@ -163,7 +163,9 @@ def now():
     now = datetime.utcnow()
     return now.replace(tzinfo=pytz.utc)
   
-    
+def nulltime():
+    dt = datetime.utcfromtimestamp(0)    
+    return dt.replace(tzinfo=pytz.utc)
 
 def config_dict(filename):
     config = {}

@@ -6,7 +6,8 @@ Created on Aug 2, 2013
 from contextlib import contextmanager
 from datetime import datetime
 from mtq.log import MongoStream, MongoHandler, add_all, remove_all
-from mtq.utils import handle_signals, now, stream_logging, setup_logging2
+from mtq.utils import handle_signals, now, stream_logging, setup_logging2,\
+    nulltime
 from multiprocessing import Process
 import logging
 import os
@@ -236,7 +237,7 @@ class WorkerProxy(object):
     
     @property
     def last_check_in(self):
-        return self.doc.get('check-in', datetime.utcfromtimestamp(0))
+        return self.doc.get('check-in', nulltime())
         
     def stream(self):
         collection = self.factory.logging_collection
