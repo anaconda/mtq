@@ -136,6 +136,7 @@ def main():
     args = parser.parse_args()
     
     config = config_dict(args.config)
+    import pdb;pdb.set_trace()
     factory = MTQConnection.from_config(config)
     args.action(factory, args)
     

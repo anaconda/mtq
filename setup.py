@@ -14,6 +14,7 @@ setup(
     
     install_requires=['pymongo>=2.5',
                       'python-dateutil>=2.1',
+                      'pytz>=2013b',
                       ],
     entry_points={
           'console_scripts': [

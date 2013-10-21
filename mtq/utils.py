@@ -12,6 +12,7 @@ from bson.errors import InvalidId
 from bson.objectid import ObjectId
 from contextlib import contextmanager
 import io
+import pytz
 
 class ImportStringError(Exception):
     pass
@@ -159,7 +160,9 @@ def setup_logging(worker_id, job_id, silence=False):
     
     
 def now():
-    return datetime.utcnow()    
+    now = datetime.utcnow()
+    return now.replace(tzinfo=pytz.utc)
+  
     
 
 def config_dict(filename):

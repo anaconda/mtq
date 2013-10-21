@@ -63,7 +63,7 @@ class MTQConnection(object):
             return config['connection']
 
         if client is None:
-            client = MongoClient(config.get('DB_HOST', 'mongodb://localhost/?journal=true'))
+            client = MongoClient(config.get('DB_HOST', 'mongodb://localhost/?journal=true'), tz_aware=True)
         
         db = getattr(client, config.get('DB', 'mq'))
         
