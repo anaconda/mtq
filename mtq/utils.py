@@ -115,9 +115,9 @@ def stream_logging(silence=False):
 @contextmanager
 def setup_logging2(worker_id, job_id, lognames=()):
     
-    record = io.BytesIO()
-    hndlr = logging.StreamHandler(record)
-    hndlr.setLevel(logging.INFO)
+    record = io.StringIO() if is_py3() else io.BytesIO()
+    record_hndlr = logging.StreamHandler(record)
+    record_hndlr.setLevel(logging.INFO)
     
     logger = logging.getLogger('job')
     
@@ -130,16 +130,23 @@ def setup_logging2(worker_id, job_id, lognames=()):
     loggers = [logger] + [logging.getLogger(name) for name in lognames]
     
     [logger.addHandler(hndlr) for logger in loggers]
+    [logger.addHandler(record_hndlr) for logger in loggers]
     
     logger.info('Starting Job %s' % job_id)
     
     try:
         yield loggers
     except:
-        logger.exception("job %s exited with exception:\nJob Log:\n%s\n-----\n" % (job_id, record.getvalue(),))
+        text = record.getvalue().replace('\n', '\n   | ')
+        msg = """Job %s exited with exception:
+Job Log:
+   | %s
+        
+        """ % (job_id, text,)
+        logger.exception(msg)
         raise
     else:
-        logger.info("job %s finished successfully" % (job_id,))
+        logger.info("Job %s finished successfully" % (job_id,))
     finally:
         [logger.removeHandler(hndlr) for logger in loggers]
 

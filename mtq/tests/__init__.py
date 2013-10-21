@@ -5,12 +5,14 @@ from mtq.utils import stream_logging
 import logging
 import io
 
-logger = logging.getLogger('job')
+logger = logging.getLogger('job.foo.bar')
+logger.setLevel(logging.INFO)
 
 def raise_error():
     x = 1 + 1
-    print('all ok 22')
+    logger = logging.getLogger('job.foo.bar')
     logger.info("this is an info")
+    logging.getLogger('job').info("this is an info 2222")
     asdf
 
 def do_somthing():
