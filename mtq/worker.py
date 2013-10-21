@@ -69,6 +69,7 @@ class Worker(object):
                                                  'tags': self.tags,
                                                  'log_output': bool(self._log_worker_output),
                                                  'terminate': False,
+                                                 'terminate_status': 0,
                                                  })
         if self._log_worker_output:
             hdlr = MongoHandler(self.factory.logging_collection, {'worker_id':self.worker_id})
@@ -88,7 +89,11 @@ class Worker(object):
         query = {'_id': self.worker_id}
         update = {'$set':{'check-in':now(), 'working':True}}
         worker_info = self.collection.find_and_modify(query, update)
-        return worker_info and worker_info.get('terminate', False)
+        if worker_info:
+            should_exit = worker_info.get('terminate', False)
+            status = worker_info.get('terminate_status', 0)
+            return should_exit, status
+        return False, 0
 
     def work(self, one=False, batch=False):
         '''
@@ -119,10 +124,10 @@ class Worker(object):
         self.logger.info('Listening for jobs queues=[%s] tags=[%s]' % (', '.join(self.queues), ', '.join(self.tags)))
         
         while 1:
-            should_exit = self.check_in()
+            should_exit, status = self.check_in()
             if should_exit:
                 self.logger.info("Shutdown Requested (from DB)")
-                break
+                raise SystemExit(status)
             
             job = self.factory.pop_item(worker_id=self.worker_id,
                                         queues=self.queues,
