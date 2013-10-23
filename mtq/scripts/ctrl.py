@@ -56,7 +56,9 @@ def shutdown(conn, args):
         query['_id'] = args.id
     
     print('Shutting down %i workers' % coll.find(query).count())
-    coll.update(query, {'$set':{'terminate':True}}, multi=True)
+    update = {'$set':{'terminate':True,
+                      'terminate_status':args.status}}
+    coll.update(query, update, multi=True)
     print('Done')
     
     
@@ -93,7 +95,11 @@ def main():
     sparser = sp.add_parser('shutdown',
                             help=('Schedule workers for shutdown. '
                                   'Workers will self-terminate on next check-in'))
+    sparser.add_argument('-s', '--status', type=int,
+                       help='Status code', default=1)
+
     sparser.set_defaults(main=shutdown)
+    
     group = sparser.add_mutually_exclusive_group(required=True)
     
     group.add_argument('-a', '--all', action='store_true',
