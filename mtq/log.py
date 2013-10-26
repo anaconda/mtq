@@ -31,29 +31,27 @@ class ColorStreamHandler(logging.Handler):
     def __init__(self, level=logging.INFO):
         logging.Handler.__init__(self, level=level)
     def emit(self, record):
+        header = ''
         if record.levelno == logging.INFO:
-            header = 'info'
+            header = record.name
             message = record.getMessage()
             stream = sys.stdout
         else:
             stream = sys.stderr
             if record.exc_info:
                 err = record.exc_info[1]
-                header = type(err).__name__
+                header = '%s:%s' % (type(err).__name__, record.name)
                 if err.args:
                     message = err.args[0]
                 else:
                     message = str(err)
             else:
-                header = record.levelname.lower()
+                header = record.name
                 message = record.getMessage()
-        
-        if header:
-            if stream.isatty() and not sys.platform.startswith('win'):
-                header = self.color_map(header, record.levelname)
-            stream.write('%s %s\n' % (header, message))
-        else:
-            stream.write('%s' % message)
+                
+        if stream.isatty() and not sys.platform.startswith('win'):
+            header = self.color_map(header, record.levelname)
+        stream.write('%s %s\n' % (header, message))
 
 
 class BSONFormatter(object):
