@@ -12,7 +12,8 @@ def raise_error():
     x = 1 + 1
     logger = logging.getLogger('job.foo.bar')
     logger.info("this is an info")
-    logging.getLogger('job').info("this is an info 2222")
+    logging.getLogger('woc').info("this is from the woc log")
+    logging.getLogger('job').info("this is an info 2333")
     asdf
 
 def do_somthing():
