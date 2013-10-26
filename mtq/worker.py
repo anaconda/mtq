@@ -5,15 +5,13 @@ Created on Aug 2, 2013
 '''
 from contextlib import contextmanager
 from datetime import datetime
-from mtq.log import MongoStream, MongoHandler, add_all, remove_all
-from mtq.utils import handle_signals, now, stream_logging, setup_logging2,\
-    nulltime
+from mtq.log import MongoStream, MongoHandler
+from mtq.utils import handle_signals, now, setup_logging2, nulltime
 from multiprocessing import Process
 import logging
 import os
 import sys
 import time
-import io
 
 
 class Worker(object):
@@ -208,6 +206,7 @@ class Worker(object):
     
     
 class WorkerProxy(object):
+    'This is a representation of an actual worker process'
     
     def __init__(self, factory, doc):
         self.factory = factory
@@ -231,17 +230,20 @@ class WorkerProxy(object):
         
     @property
     def num_processed(self):
+        'number of tasks this worker has completed'
         collection = self.factory.queue_collection
         return collection.find({'worker_id': self.id}).count()
     
     @property
     def num_backlog(self):
+        'number of tasks this worker has to complete'
         return self.factory._items_cursor(queues=self.qnames,
                                           tags=self.tags,
                                           ).count()
     
     @property
     def last_check_in(self):
+        'last check in time'
         return self.doc.get('check-in', nulltime())
         
     def stream(self):
@@ -252,6 +254,7 @@ class WorkerProxy(object):
                            finished=self.finished)
     
     def finished(self):
+        'test if this worker is finished'
         coll = self.factory.worker_collection
         cursor = coll.find({'_id':self.id, 'working':False})
         return bool(cursor.count())
