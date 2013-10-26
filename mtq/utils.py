@@ -119,7 +119,11 @@ class UnicodeFormatter(logging.Formatter):
             msg = msg.decode()
         return msg
          
-
+mgs_template = """Job %s exited with exception:
+Job Log:
+   | %s
+        
+"""
 @contextmanager
 def setup_logging2(worker_id, job_id, lognames=()):
     
@@ -130,16 +134,10 @@ def setup_logging2(worker_id, job_id, lognames=()):
     
     logger = logging.getLogger('job')
     
-    
-    hndlr = logging.StreamHandler(sys.stderr)
-    hndlr.setLevel(logging.ERROR)
-    logger.addHandler(hndlr)
-
     logger.setLevel(logging.INFO)
     loggers = [logger] + [logging.getLogger(name) for name in lognames]
     
-    [logger.addHandler(hndlr) for logger in loggers]
-    [logger.addHandler(record_hndlr) for logger in loggers]
+    [l.addHandler(record_hndlr) for l in loggers]
     
     logger.info('Starting Job %s' % job_id)
     
@@ -147,17 +145,13 @@ def setup_logging2(worker_id, job_id, lognames=()):
         yield loggers
     except:
         text = record.getvalue().replace('\n', '\n   | ')
-        msg = """Job %s exited with exception:
-Job Log:
-   | %s
-        
-        """ % (job_id, text,)
+        msg = mgs_template % (job_id, text,)
         logger.exception(msg)
         raise
     else:
         logger.info("Job %s finished successfully" % (job_id,))
     finally:
-        [logger.removeHandler(hndlr) for logger in loggers]
+        pass
 
 def setup_logging(worker_id, job_id, silence=False):
     '''
