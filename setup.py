@@ -2,7 +2,15 @@
 @author: sean
 '''
 
-from setuptools import setup, find_packages
+import sys
+
+if 'develop' in sys.argv:
+    # Don't import setuptools unless the user is actively trying to do
+    # something that requires it.
+    from setuptools import setup
+
+else:
+  from distutils.core import setup
 
 setup(
     name='mtq',
@@ -10,7 +18,7 @@ setup(
     author='Continuum Analytics',
     author_email='sean.ross-ross@continuum.io',
     description='Mongo Task Queue',
-    packages=find_packages(),
+    packages=['mtq'],
     
     install_requires=['pymongo>=2.5',
                       'python-dateutil>=2.1',
