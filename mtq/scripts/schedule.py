@@ -38,12 +38,12 @@ def test_rule(rule_str):
 
 
 def pprint_scheduler(scheduler):
-    jobs = scheduler.jobs
-    if not jobs.count():
+    rules = scheduler.rules
+    if not rules.count():
         print('No Scheduled tasks')
         return 
-    for task in jobs:
-        print('%(_id)s | %(rule)30s | %(task)20s | %(queue)s' % task)
+    for rule in rules:
+        print('%(_id)s | %(rule)30s | %(task)20s | %(queue)s' % rule)
 
 
 def main():
