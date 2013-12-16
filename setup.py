@@ -14,7 +14,7 @@ else:
 
 setup(
     name='mtq',
-    version="0.1.2",
+    version="0.2.0",
     author='Continuum Analytics',
     author_email='sean.ross-ross@continuum.io',
     description='Mongo Task Queue',
