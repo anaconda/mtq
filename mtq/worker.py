@@ -93,7 +93,7 @@ class Worker(object):
             return should_exit, status
         return False, 0
 
-    def work(self, one=False, batch=False):
+    def work(self, one=False, batch=False, failed=False):
         '''
         Main work function
         
@@ -102,7 +102,7 @@ class Worker(object):
         '''
         with self.register():
             try:
-                self.start_main_loop(one, batch)
+                self.start_main_loop(one, batch, failed)
             except KeyboardInterrupt:
                 self.logger.exception(None)
                 if not self._current:
@@ -112,7 +112,7 @@ class Worker(object):
                 proc, job = self._current
                 proc.join(timeout=job.doc.get('timeout'))
 
-    def start_main_loop(self, one=False, batch=False):
+    def start_main_loop(self, one=False, batch=False, pop_failed=False):
         '''
         Start the main loop and process jobs
         '''
@@ -122,6 +122,7 @@ class Worker(object):
         self.logger.info('Listening for jobs queues=[%s] tags=[%s]' % (', '.join(self.queues), ', '.join(self.tags)))
         
         while 1:
+            
             should_exit, status = self.check_in()
             if should_exit:
                 self.logger.info("Shutdown Requested (from DB)")
@@ -130,13 +131,14 @@ class Worker(object):
             job = self.factory.pop_item(worker_id=self.worker_id,
                                         queues=self.queues,
                                         tags=self.tags,
+                                        failed=pop_failed,
                                         )
             if job is None:
                 if batch: break
                 time.sleep(self.poll_interval)
                 continue
             
-            failed = self.process_job(job)
+            self.process_job(job)
             
             if one: break
             

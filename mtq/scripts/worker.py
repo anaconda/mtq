@@ -46,7 +46,7 @@ def aux(args):
         worker.process_job(job)
         return
         
-    worker.work(one=args.one, batch=args.batch)
+    worker.work(one=args.one, batch=args.batch, failed=args.failed)
     
 
 def main():
@@ -65,6 +65,8 @@ def main():
                         help='Process jobs until the queue is empty, then exit')
     parser.add_argument('-j', '--job-id', type=object_id,
                         help='Process the job (even if it has already been processed)')
+    parser.add_argument('-f', '--failed', action='store_true',
+                        help='Process failed jobs')
     args = parser.parse_args()
     
     if args.reloader:

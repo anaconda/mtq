@@ -5,7 +5,6 @@ Created on Aug 2, 2013
 '''
 from mtq.utils import import_string, now, nulltime
 from mtq.log import MongoStream
-from datetime import datetime
 from bson.objectid import ObjectId
 from time import mktime
 
@@ -101,7 +100,7 @@ class Job(object):
             if data:
                 self.factory.queue_collection.remove({'_id':self.id})
                 self.factory.finished_jobs_collection.insert(data)
-
+        
     def stream(self):
         '''
         Get a stream to read log lines from this job  

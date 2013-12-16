@@ -112,7 +112,7 @@ class MTQConnection(object):
         collection_name = '%s.schedule' % self.collection_base
         return db[collection_name]
 
-    def make_query(self, queues, tags, priority=0, processed=False, **query):
+    def make_query(self, queues, tags, priority=0, processed=False, failed=False, **query):
         '''
         return a mongodb query dict to get the next task in the queue 
         '''
@@ -120,9 +120,11 @@ class MTQConnection(object):
                 'priority':{'$gte':priority},
                 'process_after': {'$lte':now()},
                  })
-        
-        if processed is not None:
+        if failed:
+            query['failed'] = True
+        elif processed is not None:
             query['processed'] = processed
+        
         if queues:
             if len(queues) == 1:
                 query['qname'] = queues[0]
@@ -141,7 +143,7 @@ class MTQConnection(object):
         else:
             return {'$and': [{'tags':tag} for tag in tags]}
 
-    def pop_item(self, worker_id, queues, tags, priority=0):
+    def pop_item(self, worker_id, queues, tags, priority=0, failed=False):
         'Pop an item from the queue'
         n = now()
         update = {'$set':{'processed':True,
@@ -150,7 +152,7 @@ class MTQConnection(object):
                           'worker_id':worker_id}
                   }
         
-        query = self.make_query(queues, tags, priority) 
+        query = self.make_query(queues, tags, priority, failed) 
         doc = self.queue_collection.find_and_modify(query, update)
         
         if doc is None:
