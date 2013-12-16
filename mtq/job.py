@@ -95,6 +95,12 @@ class Job(object):
                   }
         
         self.factory.queue_collection.update({'_id':self.id}, update)
+        
+        if not failed:
+            data = self.factory.queue_collection.find_one({'_id':self.id})
+            if data:
+                self.factory.queue_collection.remove({'_id':self.id})
+                self.factory.finished_jobs_collection.insert(data)
 
     def stream(self):
         '''

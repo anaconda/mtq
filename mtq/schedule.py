@@ -86,12 +86,12 @@ class Scheduler(object):
                     
                     next_event = min(next_event, rrule.after(n))
                 
-                self.logger.info("Next event %s" % next_event.ctime())
+                self.logger.debug("Next event %s" % next_event.ctime())
                 next_event = (next_event - now()).total_seconds()
-                self.logger.info("Next event in %i seconds" % next_event)
+                self.logger.debug("Next event in %i seconds" % next_event)
                 
                 sleep = max(1, min(next_event, poll_interval)) 
-                self.logger.info("Sleping for %i seconds" % sleep)
+                self.logger.debug("Sleping for %i seconds" % sleep)
                 time.sleep(sleep)
         
         except KeyboardInterrupt:

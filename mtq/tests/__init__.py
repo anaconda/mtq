@@ -16,7 +16,7 @@ def raise_error():
     logging.getLogger('job').info("this is an info 2333")
     asdf
 
-def do_somthing():
+def do_something():
     logger.info("this is a log")
     print("this is a print")
     
@@ -33,15 +33,10 @@ def main():
     hndlr.setLevel(logging.INFO)
     logger.warn("asdfasdf")
     
-    
     print(record)
     record.seek(0)
     print(record.read())
 
-#     print('Blah 1')
-#     with stream_logging():
-#         print('Blah 2')
-#     print('Blah 3')
 
 if __name__ == '__main__':
     main()

@@ -246,7 +246,7 @@ def shutdown_worker(conn, worker_id=None):
 
 def last_job(conn, worker_id):
     coll = conn.queue_collection
-    cursor = coll.find({'worker_id': worker_id}).sort('$natural', -1)
+    cursor = coll.find({'worker_id': worker_id}).sort('enqueued_at', -1)
     doc = next(cursor, None)
     
     if doc:

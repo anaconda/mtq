@@ -204,7 +204,13 @@ class Worker(object):
     def push_exception_handler(self, handler):
         self._handler = handler
     
-    
+    @property
+    def num_backlog(self):
+        'number of tasks this worker has to complete'
+        return self.factory._items_cursor(queues=self.queues,
+                                          tags=self.tags,
+                                          ).count()
+
 class WorkerProxy(object):
     'This is a representation of an actual worker process'
     

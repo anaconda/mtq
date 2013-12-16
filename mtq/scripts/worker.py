@@ -26,6 +26,10 @@ def aux(args):
     worker = factory.new_worker(queues=queues, tags=tags, log_worker_output=args.log_output, 
                                 poll_interval=args.poll_interval)
     
+    if args.backlog:
+        print worker.num_backlog
+        return
+
     if config.get('exception_handler'):
         worker.push_exception_handler(config['exception_handler'])
     if config.get('pre_call'):
@@ -55,6 +59,8 @@ def main():
     parser.add_argument('-l', '--log-output', action='store_true', help='Store job and woker ouput in the db, seealso mtq-tail')
     parser.add_argument('-1', '--one', action='store_true',
                         help='Process only the first job')
+    parser.add_argument('--backlog','--list-jobs', action='store_true',
+                        help='List backlog of jobs and exit', dest='backlog')
     parser.add_argument('-b', '--batch', action='store_true',
                         help='Process jobs until the queue is empty, then exit')
     parser.add_argument('-j', '--job-id', type=object_id,

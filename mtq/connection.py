@@ -90,6 +90,12 @@ class MTQConnection(object):
     def queue_collection(self):
         'The collection to push jobs to'
         collection_name = '%s.queue' % (self.collection_base)
+        return self.db[collection_name]
+
+    @property
+    def finished_jobs_collection(self):
+        'The collection to push jobs to'
+        collection_name = '%s.finished_jobs' % (self.collection_base)
         return ensure_capped_collection(self.db, collection_name, self.qsize)
 
     @property
@@ -157,7 +163,7 @@ class MTQConnection(object):
         cursor = self.queue_collection.find(query)
         
         if reverse:
-            cursor = cursor.sort('$natural', -1)
+            cursor = cursor.sort('enqueued_at', -1)
         if limit:
             cursor = cursor.limit(limit)
             
@@ -200,7 +206,7 @@ class MTQConnection(object):
     def worker_collection(self):
         'Collection to register workers to'
         collection_name = '%s.workers' % self.collection_base
-        return ensure_capped_collection(self.db, collection_name, self.workersize)
+        return self.db[collection_name]
 
     @property
     def queues(self):
