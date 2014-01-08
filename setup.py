@@ -4,15 +4,15 @@
 
 import sys
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='mtq',
-    version="0.3.1",
+    version="0.3.2",
     author='Continuum Analytics',
     author_email='sean.ross-ross@continuum.io',
     description='Mongo Task Queue',
-    packages=['mtq'],
+    packages=find_packages(),
     
     install_requires=['pymongo>=2.5',
                       'python-dateutil>=2.1',
