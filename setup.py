@@ -4,13 +4,7 @@
 
 import sys
 
-if 'develop' in sys.argv:
-    # Don't import setuptools unless the user is actively trying to do
-    # something that requires it.
-    from setuptools import setup
-
-else:
-    from distutils.core import setup
+from setuptools import setup
 
 setup(
     name='mtq',
