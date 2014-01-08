@@ -10,11 +10,11 @@ if 'develop' in sys.argv:
     from setuptools import setup
 
 else:
-  from distutils.core import setup
+    from distutils.core import setup
 
 setup(
     name='mtq',
-    version="0.2.0",
+    version="0.3.0",
     author='Continuum Analytics',
     author_email='sean.ross-ross@continuum.io',
     description='Mongo Task Queue',
