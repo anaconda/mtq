@@ -6,9 +6,14 @@ import sys
 
 from setuptools import setup, find_packages
 
+try:
+    from mtq import __version__ as version
+except ImportError:
+    version = '?'
+    
 setup(
     name='mtq',
-    version="0.3.2",
+    version=version,
     author='Continuum Analytics',
     author_email='sean.ross-ross@continuum.io',
     description='Mongo Task Queue',
