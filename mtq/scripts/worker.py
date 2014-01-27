@@ -10,7 +10,7 @@ import mtq
 import sys
 logger = logging.getLogger('worker')
 
-def aux(args, unknown):
+def aux(args):
     
     logger = logging.getLogger('mq.Worker')
     logger.setLevel(logging.INFO)
@@ -22,17 +22,10 @@ def aux(args, unknown):
     tags = config.get('TAGS', ()) or args.tags
     queues = config.get('QUEUES', ()) or args.queues
     
-    extra_argument_parser = config.get('argument_parser')
-    if extra_argument_parser:
-        extra_argument_parser(unknown)
-    elif unknown:
-        sys.stderr.write('error: unknown arguments %r\n' % unknown)
-        sys.exit(-1)
-    
     factory = MTQConnection.from_config(config)
     
     worker = factory.new_worker(queues=queues, tags=tags, log_worker_output=args.log_output, 
-                                poll_interval=args.poll_interval)
+                                poll_interval=args.poll_interval, args=args)
     
     if args.backlog:
         print worker.num_backlog
@@ -58,12 +51,20 @@ def aux(args, unknown):
     
 
 def main():
-    parser = ArgumentParser(description=__doc__, version='Mongo Task Queue (mtq) v%s' % mtq.__version__)
+    parser = ArgumentParser(description=__doc__, version='Mongo Task Queue (mtq) v%s' % mtq.__version__, add_help=False)
+    parser.add_argument('-c', '--config', help='Python module containing MTQ settings.')
+    
+    args, _ = parser.parse_known_args()
+    config = config_dict(args.config)
+    add_extra_arguments = config.get('extra_arguments')
+    
+    parser = ArgumentParser(description=__doc__, version='Mongo Task Queue (mtq) v%s' % mtq.__version__, add_help=True)
+    parser.add_argument('-c', '--config', help='Python module containing MTQ settings.')
+    
     parser.add_argument('queues', nargs='*', default=['default'], help='The queues to listen on (default: %(default)r)')
     parser.add_argument('-r', '--reloader', action='store_true', help='Reload the worker when it detects a change')
     parser.add_argument('-p', '--poll-interval', help='Sleep interval to check for jobs', default=3, type=int)
     parser.add_argument('-t', '--tags', nargs='*', help='only process jobs which contain all of the tags', default=[])
-    parser.add_argument('-c', '--config', help='Python module containing MTQ settings.')
     parser.add_argument('-l', '--log-output', action='store_true', help='Store job and woker ouput in the db, seealso mtq-tail')
     parser.add_argument('-1', '--one', action='store_true',
                         help='Process only the first job')
@@ -76,13 +77,16 @@ def main():
     parser.add_argument('-f', '--failed', action='store_true',
                         help='Process failed jobs')
     
-    args, unknown = parser.parse_known_args()
+    if add_extra_arguments:
+        add_extra_arguments(parser)
+        
+    args = parser.parse_args()
     
     if args.reloader:
         from werkzeug.serving import run_with_reloader
-        run_with_reloader(lambda: aux(args, unknown))
+        run_with_reloader(lambda: aux(args))
     else:
-        aux(args, unknown)
+        aux(args)
     
     
 if __name__ == '__main__':

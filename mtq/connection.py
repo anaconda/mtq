@@ -188,7 +188,7 @@ class MTQConnection(object):
     
 
         
-    def new_worker(self, queues=(), tags=(), priority=0, silence=False, log_worker_output=False, poll_interval=3):
+    def new_worker(self, queues=(), tags=(), priority=0, silence=False, log_worker_output=False, poll_interval=3, args=None):
         '''
         Create a worker object
         
@@ -197,9 +197,13 @@ class MTQConnection(object):
         :param priority: (not implemented yet)
         :param log_worker_output: if true, log worker output to the db
         '''
-        return mtq.Worker(self, queues, tags, priority,
+        worker = mtq.Worker(self, queues, tags, priority,
                          log_worker_output=log_worker_output,
                          silence=silence, extra_lognames=self.extra_lognames,poll_interval=poll_interval)
+        
+        self.args = args
+        self.worker = worker
+        return worker
     
     #===========================================================================
     # Workers
