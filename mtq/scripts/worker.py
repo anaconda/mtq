@@ -1,15 +1,16 @@
 '''
 Starts an MTQ worker.
 '''
-from argparse import ArgumentParser
+from argparse import ArgumentParser, ArgumentError 
 from mtq.connection import MTQConnection
 from mtq.log import ColorStreamHandler
 from mtq.utils import config_dict, object_id
 import logging
 import mtq
+import sys
 logger = logging.getLogger('worker')
 
-def aux(args):
+def aux(args, unknown):
     
     logger = logging.getLogger('mq.Worker')
     logger.setLevel(logging.INFO)
@@ -20,6 +21,13 @@ def aux(args):
     
     tags = config.get('TAGS', ()) or args.tags
     queues = config.get('QUEUES', ()) or args.queues
+    
+    extra_argument_parser = config.get('argument_parser')
+    if extra_argument_parser:
+        extra_argument_parser(unknown)
+    elif unknown:
+        sys.stderr.write('error: unknown arguments %r\n' % unknown)
+        sys.exit(-1)
     
     factory = MTQConnection.from_config(config)
     
@@ -67,13 +75,14 @@ def main():
                         help='Process the job (even if it has already been processed)')
     parser.add_argument('-f', '--failed', action='store_true',
                         help='Process failed jobs')
-    args = parser.parse_args()
+    
+    args, unknown = parser.parse_known_args()
     
     if args.reloader:
         from werkzeug.serving import run_with_reloader
-        run_with_reloader(lambda: aux(args))
+        run_with_reloader(lambda: aux(args, unknown))
     else:
-        aux(args)
+        aux(args, unknown)
     
     
 if __name__ == '__main__':
