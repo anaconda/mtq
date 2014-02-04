@@ -12,6 +12,7 @@ import logging
 import os
 import sys
 import time
+import signal
 
 
 class Worker(object):
@@ -156,10 +157,22 @@ class Worker(object):
         proc = Process(target=self._process_job, args=(job,))
         self._current = proc, job
         proc.start()
+        timeout = job.doc.get('timeout')
+        if timeout:
+            self.logger.info("Job started, timing out after %s seconds" % timeout)
+        else:
+            self.logger.info("Job started, no time out")
+            
         proc.join(timeout=job.doc.get('timeout'))
         if proc.is_alive():
-            self.logger.error('Timeout occurred: terminating job')
-            proc.terminate()
+            self.logger.error('Timeout occurred: interupting job')
+            os.kill(proc.pid, signal.SIGALRM)
+            #Give the process 2 min to finish
+            proc.join(timeout=min(job.doc.get('timeout'), 2 * 60))
+            
+            if proc.is_alive():
+                self.logger.error('Process did not shut down after interupt: terminating job')
+                proc.terminate()
         
         self._current = None
         

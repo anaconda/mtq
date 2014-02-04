@@ -69,6 +69,8 @@ def main():
     parser.add_argument('-t', '--task', help='importable string of the task to be run. Must be a callable object with no arguments')
     parser.add_argument('-q', '--queue', help='name of the queue (default: default)')
     parser.add_argument('--tags', help='tag the job with these tags')
+    parser.add_argument('--timeout', type=int, default=None,
+                        help='Timeout after N seconds', metavar='N')
     args = parser.parse_args()
     
     config = config_dict(args.config)
@@ -82,7 +84,7 @@ def main():
     if args.add:
         if args.task is None:
             raise Exception('must specify task')
-        _id = scheduler.add_job(args.rule, args.task, args.queue or 'default', args.tags)
+        _id = scheduler.add_job(args.rule, args.task, args.queue or 'default', args.tags, args.timeout)
         print('Added new scheduled task _id=%s' % (_id,))
     if args.update:
         scheduler.update_job(args.update, args.rule, args.task, args.queue, args.tags)
@@ -93,7 +95,7 @@ def main():
         print('Remove scheduled task _id=%s' % (args.remove,))
     elif args.now:
         queue = factory.queue(args.queue, tags=args.tags)
-        queue.enqueue_call(args.now)
+        queue.enqueue_call(args.now, timeout=args.timeout)
     elif args.run:
         scheduler.run()
     

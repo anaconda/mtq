@@ -13,6 +13,7 @@ from bson.objectid import ObjectId
 from contextlib import contextmanager
 import io
 import pytz
+from mtq import errors
 
 class ImportStringError(Exception):
     pass
@@ -37,14 +38,18 @@ def handle_signals():
     '''
     def handler(signum, frame):
         signal.signal(signal.SIGINT, signal.default_int_handler)
-        
+    
+    def raise_timeout():
+        raise errors.Timeout()
+    
     def term_handler(signum, frame):
         traceback.print_stack(frame)
         signal.signal(signal.SIGTERM, signal.SIG_DFL)
         raise SystemExit(-signum)
-        
+    
     signal.signal(signal.SIGINT, handler)
     signal.signal(signal.SIGTERM, term_handler)
+    signal.signal(signal.SIGALRM, raise_timeout)
 
 def import_string(import_name, silent=False):
     """Imports an object based on a string.  This is useful if you want to

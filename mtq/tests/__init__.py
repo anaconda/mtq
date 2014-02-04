@@ -21,8 +21,18 @@ def do_something():
     print("this is a print")
     
 def long_running_task():
-    logger.info("this is long_running_task")
-    time.sleep(30)
+    try:
+        print("this is long_running_task ...")
+        for _ in range(60):
+            print("this is still a long_running_task ...")
+            time.sleep(10)
+    
+    except Exception as err:
+        print("This is an exception")
+        raise err
+    except BaseException as err:
+        print("This is a base exception")
+        raise err
     
 def main():
     record = io.BytesIO()

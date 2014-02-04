@@ -17,13 +17,14 @@ class Scheduler(object):
         self.logger = logging.getLogger('mtq.Scheduler')
 
     
-    def add_job(self, rule, task, queue, tags=()):
+    def add_job(self, rule, task, queue, tags=(), timeout=None):
         collection = self.factory.schedule_collection
         return collection.insert({'rule':rule, 'task':task, 'queue':queue, 'tags':tags,
                                   'paused':False, 'active':True,
                                   'modified':now(),
                                   'created':now(),
                                   'checked':now(),
+                                  'timeout': timeout,
                                   })
  
     def remove_job(self, _id):
@@ -61,7 +62,7 @@ class Scheduler(object):
 
     def enqueue_from_rule(self, rule):
         queue = self.factory.queue(rule['queue'], tags=rule['tags'])
-        queue.enqueue(rule['task'])
+        queue.enqueue_call(rule['task'], timeout=rule.get('timeout'))
     
     def run(self):
         self.logger.info('Running Scheduler')
