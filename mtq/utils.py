@@ -24,29 +24,29 @@ def is_str(obj):
         return isinstance(obj, str)
     else:
         return isinstance(obj, basestring)
-        
+
 def is_unicode(obj):
     if is_py3():
         return isinstance(obj, str)
     else:
         return isinstance(obj, unicode)
-        
-    
+
+
 def handle_signals():
     '''
     Handle signals in multiprocess.Process threads
     '''
     def handler(signum, frame):
         signal.signal(signal.SIGINT, signal.default_int_handler)
-    
-    def raise_timeout():
+
+    def raise_timeout(signum, frame):
         raise errors.Timeout()
-    
+
     def term_handler(signum, frame):
         traceback.print_stack(frame)
         signal.signal(signal.SIGTERM, signal.SIG_DFL)
         raise SystemExit(-signum)
-    
+
     signal.signal(signal.SIGINT, handler)
     signal.signal(signal.SIGTERM, term_handler)
     signal.signal(signal.SIGALRM, raise_timeout)
@@ -106,24 +106,24 @@ def ensure_capped_collection(db, collection_name, size_mb):
 @contextmanager
 def stream_logging(silence=False):
     from mtq.log import IOStreamLogger
-    
+
     stdout = sys.stdout
     sys.stdout = IOStreamLogger(sys.stdout, silence)
-    
+
     stderr = sys.stderr
     sys.stderr = IOStreamLogger(sys.stderr, silence)
     yield sys.stdout, sys.stderr
-    
+
     sys.stdout = stdout
     sys.stderr = stderr
 
 class UnicodeFormatter(logging.Formatter):
     def format(self, record):
-        msg =  logging.Formatter.format(self, record)
+        msg = logging.Formatter.format(self, record)
         if hasattr(msg, 'decode'):
             msg = msg.decode()
         return msg
-         
+
 mgs_template = """Job %s exited with exception:
 Job Log:
    | %s
@@ -131,21 +131,21 @@ Job Log:
 """
 @contextmanager
 def setup_logging2(worker_id, job_id, lognames=()):
-    
+
     record = io.StringIO()
     record_hndlr = logging.StreamHandler(record)
     record_hndlr.setFormatter(UnicodeFormatter())
     record_hndlr.setLevel(logging.INFO)
-    
+
     logger = logging.getLogger('job')
-    
+
     logger.setLevel(logging.INFO)
     loggers = [logger] + [logging.getLogger(name) for name in lognames]
-    
+
     [l.addHandler(record_hndlr) for l in loggers]
-    
+
     logger.info('Starting Job %s' % job_id)
-    
+
     try:
         yield loggers
     except:
@@ -163,23 +163,23 @@ def setup_logging(worker_id, job_id, silence=False):
     set up logging for worker
     '''
     from mtq.log import mstream, MongoHandler
-    
+
     doc = {'worker_id':worker_id, 'job_id':job_id}
     sys.stdout = mstream(collection, doc.copy(), sys.stdout, silence)
     sys.sterr = mstream(collection, doc.copy(), sys.stderr, silence)
-    
+
     logger = logging.getLogger('job')
-    logger.setLevel(logging.INFO) 
+    logger.setLevel(logging.INFO)
     hndlr = MongoHandler(collection, doc.copy())
     logger.addHandler(hndlr)
-    
-    
+
+
 def now():
     now = datetime.utcnow()
     return now.replace(tzinfo=pytz.utc)
-  
+
 def nulltime():
-    dt = datetime.utcfromtimestamp(0)    
+    dt = datetime.utcfromtimestamp(0)
     return dt.replace(tzinfo=pytz.utc)
 
 def config_dict(filename):
@@ -214,12 +214,12 @@ def job_stats(conn, group_by='$execute.func_str', since=None):
     tags = {'$addToSet': '$push'}
     erliest = {'$min': '$finished_at'}
     latest = {'$max': '$finished_at'}
-    
+
     match = {'$match':{'finished':True}}
-    
+
     if since:
         match['$match']['finished_at'] = {'$gt':since}
-    
+
     raw = coll.aggregate([match, {'$group':{'_id':group_by,
                                            'duration': duration,
                                            'wait_in_queue': wait,
@@ -229,16 +229,16 @@ def job_stats(conn, group_by='$execute.func_str', since=None):
                                            'failed':failed,
                                            'latest':latest,
                                            'erliest':erliest,
-                                            } } 
+                                            } }
                           ])
-    
+
     result = raw['result']
-    
+
     return {item.pop('_id'):item for item in result}
-    
-    
-    
-    
+
+
+
+
 def shutdown_worker(conn, worker_id=None):
     coll = conn.worker_collection
     query = {}
@@ -246,18 +246,18 @@ def shutdown_worker(conn, worker_id=None):
         query['_id'] = worker_id
     else:
         query = {'working':True}
-        
+
     print(coll.update(query, {'$set':{'terminate':True}}, multi=True))
 
 def last_job(conn, worker_id):
     coll = conn.queue_collection
     cursor = coll.find({'worker_id': worker_id}).sort('enqueued_at', -1)
     doc = next(cursor, None)
-    
+
     if doc:
         from mtq.job import Job
         return Job(conn, doc)
-    
+
 
 
 
