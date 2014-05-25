@@ -9,14 +9,14 @@ from .job import Job
 from .schedule import Scheduler
 from mtq.defaults import _task_map
 
-__version__ = '0.3.5'
+__version__ = '0.4.0'
 
 def default_connection():
     '''
     Create a default mtq instance to created queues, workers, and jobs
     '''
     return MTQConnection.default()
-     
+
 def create_connection(db,
            collection_base=defaults._collection_base,
            qsize=defaults._qsize,
@@ -32,7 +32,7 @@ def create_connection(db,
 
     '''
     return MTQConnection(db, collection_base, qsize, workersize, logsize, extra_lognames)
-    
+
 def from_config(config=None, client=None):
     '''
     Create a new mtq instance to created queues, workers, and jobs
@@ -48,11 +48,11 @@ def from_config(config=None, client=None):
 
 
 def task(func=None, name=None):
-    
+
     def inner(func_inner):
         task_name = name or '%s.%s' % (func_inner.__module__, func_inner.__name__)
         _task_map[task_name] = func_inner
-    
+
     if func is None:
         return inner
     else:

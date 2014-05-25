@@ -154,8 +154,10 @@ class MTQConnection(object):
         if not cursor.count():
             return
 
+        # Populate dictionary of mutex_key:count
         mutex = {}
 
+        # Iterate over running jobs
         for item in cursor:
             item_mutex = item.get('mutex', {})
             if not item_mutex: continue
@@ -164,10 +166,12 @@ class MTQConnection(object):
             mutex.setdefault(mutext_key, 0)
             mutex[mutext_key] += 1
 
+        # Query should inclue jobs with no mutex key or where its key is not in any running jobs
         _or = [{'mutex': None}, {'mutex': {'$exists': False}}, {'mutex.key': {'$nin': mutex.keys()}}]
 
-        for key, limit in mutex.items():
-            _or.append({'mutex.key': key, 'mutex.count': {'$gt': limit}})
+        # Query should inclue jobs where the mutex.count is > the # already running
+        for key, already_running in mutex.items():
+            _or.append({'mutex.key': key, 'mutex.count': {'$gt': already_running}})
 
         query['$or'] = _or
 
