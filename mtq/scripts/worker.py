@@ -83,7 +83,8 @@ def main():
 
     args = parser.parse_args()
 
-    init_config(args)
+    if init_config:
+        init_config(args)
 
     if args.reloader:
         from werkzeug.serving import run_with_reloader
