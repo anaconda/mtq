@@ -120,8 +120,9 @@ def stream_logging(silence=False):
 class UnicodeFormatter(logging.Formatter):
     def format(self, record):
         msg = logging.Formatter.format(self, record)
+        # FIXME: should I be doing errors='replace'?
         if hasattr(msg, 'decode'):
-            msg = msg.decode()
+            msg = msg.decode(errors='replace')
         return msg
 
 mgs_template = """Job %s exited with exception:
