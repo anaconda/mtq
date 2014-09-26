@@ -62,7 +62,7 @@ class TestQueue(MTQTestCase):
         q.enqueue_call('call-me')
         self.assertEqual(len(q.jobs), 1)
         job = q.jobs[0]
-        self.assertEqual(job.tags, ('tags',))
+        self.assertEqual(job.tags, ['tags'])
         self.assertEqual(job.func_name, 'call-me')
         self.assertEqual(job.qname, 'my-queue')
 
@@ -91,15 +91,6 @@ class TestQueue(MTQTestCase):
 
         self.assertEqual(q.all_tags, set(['1', '2', '3']))
 
-    def test_tag_count(self):
-
-        q = self.factory.queue('my-queue')
-        q.enqueue_call('call-me1', tags=['1', '2'])
-        q.enqueue_call('call-me2', tags=['2', '3'])
-
-        self.assertEqual(q.tag_count('1'), 1)
-        self.assertEqual(q.tag_count('2'), 2)
-        self.assertEqual(q.tag_count('3'), 1)
 
 
     def test_pop(self):

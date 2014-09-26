@@ -9,9 +9,7 @@ from mtq.defaults import _collection_base, _qsize, _workersize, _logsize, \
     _task_map
 from mtq.utils import ensure_capped_collection, now
 from time import mktime
-import pymongo
 from pymongo import ASCENDING
-import time
 
 class MTQConnection(object):
     '''
@@ -140,11 +138,15 @@ class MTQConnection(object):
     def make_tag_query(self, tags):
         'Query for tags'
         if not tags:
-            return {}
-        elif len(tags) == 1:
-            return {'tags': tags[0]}
+            tag_query = {}
+#         elif len(tags) == 1:
+#             return {'tags': tags[0]}
         else:
-            return {'$and': [{'tags':tag} for tag in tags]}
+            # tags on job must be a subset of jobs on the worker
+            # i.e. assert job['tags'] in worker['tags']
+            tag_query = {'tags': {'$not':{ '$elemMatch' : {'$nin': tags}}}}
+
+        return tag_query
 
 
     def add_mutex(self, query):
@@ -193,6 +195,11 @@ class MTQConnection(object):
             return None
         else:
             return mtq.Job(self, doc)
+
+    def push_item(self, job_id):
+        query = {'_id': job_id}
+        update = {'$set':{'processed':False}}
+        doc = self.queue_collection.find_and_modify(query, update)
 
     def _items_cursor(self, queues, tags, priority=0, processed=False, limit=None, reverse=False):
         query = self.make_query(queues, tags, priority, processed=processed)

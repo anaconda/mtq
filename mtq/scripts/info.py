@@ -10,11 +10,11 @@ from datetime import timedelta, datetime
 def reltime(dt):
     delta = now() - dt
     s = delta.total_seconds()
-    
+
     hours = s / 3600.
     if hours > 1.5:
         return '%.1f hours ago' % hours
-    
+
     minutes = s / 60.0
     if minutes > 1.5:
         return '%.1f minutes ago' % minutes
@@ -29,9 +29,7 @@ def queue_stats(factory, args):
         print('   Tags: [%s]' % (', '.join(tags)))
         print('   Count: %i' % queue.count)
         print('   Latancy: %.2f seconds' % latancy.get(queue.name, -1))
-        for tag in tags:
-            print('     + %10s:%i' % (tag, queue.tag_count(tag)))
-            
+
 t = lambda tm:  (tm.ctime(), reltime(tm))
 
 def worker_stats(factory, args):
@@ -49,7 +47,7 @@ def worker_stats(factory, args):
             print('      - Id: %s' % job.doc['_id'])
             print('      - Enqueued: %s (%s)' % t(job.enqueued))
             print('      - Started : %s (%s)' % t(job.started))
-            
+
             if job.doc.get('finished'):
                 print('      - Finished: %s (%s)' % t(job.doc['finished_at']))
             else:
@@ -58,7 +56,7 @@ def worker_stats(factory, args):
             print('   *** Worker has not processed any jobs')
 
 def print_job_stats(factory, args):
-    
+
     stats = job_stats(factory, since=args.since)
     for key, value in stats.items():
         print('+', key)
@@ -67,9 +65,9 @@ def print_job_stats(factory, args):
                 item = item[0], '%s (%s)' % t(item[1])
             else:
                 item = item[0], repr(item[1])
-            
+
             print('   - %s: %s' % item)
-    
+
     cursor = factory.queue_collection.find({'finished':False})
     if cursor.count():
         print()
@@ -86,7 +84,7 @@ def print_job_stats(factory, args):
         print('Failed Jobs:')
         for job in cursor:
             print(' *', job['execute']['func_str'], job['_id'])
-    
+
 
 def max_age(arg):
     if arg.lower().endswith('s'):
@@ -108,14 +106,14 @@ def print_db_stats(factory, args):
         stats = factory.db.command('collStats', collection_names, scale=1024)
         if stats.get('capped'):
             print(" * %(ns)s (%(count)i items)" % stats)
-            print("   Using %(size)s of %(storageSize)s Kb" % stats, 
-                  '%.2f%%' %(100 * stats['size'] / stats['storageSize']),
+            print("   Using %(size)s of %(storageSize)s Kb" % stats,
+                  '%.2f%%' % (100 * stats['size'] / stats['storageSize']),
                   '(capped)' if stats.get('capped') else '',
                   )
-            
-        
+
+
 def main():
-    
+
     parser = ArgumentParser(description=__doc__, version='0.0')
     parser.add_argument('-c', '--config', help='Python module containing MTQ settings.')
     parser.add_argument('-m', '--max-age',
@@ -132,12 +130,12 @@ def main():
                        help='print stats on jobs')
     group.add_argument('-s', '--storage', '--db', action='store_const', const=print_db_stats, dest='action',
                        help='print stats on database')
-    
+
     args = parser.parse_args()
-    
+
     config = config_dict(args.config)
     factory = MTQConnection.from_config(config)
     args.action(factory, args)
-    
+
 if __name__ == '__main__':
     main()

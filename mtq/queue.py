@@ -104,7 +104,7 @@ class Queue(object):
     def all_tags(self):
         'All the unique tags of jobs in this queue'
         collection = self.factory.queue_collection
-        return collection.find({'qname':self.name}).distinct('tags')
+        return set(collection.find({'qname':self.name}).distinct('tags'))
 
     def pop(self, worker_id=None):
         'Pop a job off the queue'
@@ -123,14 +123,3 @@ class Queue(object):
     def all_jobs(self):
         return self.factory.items([self.name], self.tags, self.priority, processed=None, limit=30, reverse=True)
 
-
-    def tag_count(self, tags):
-        'Number of pending jobs in this queue with this tag'
-        collection = self.factory.queue_collection
-
-        if not isinstance(tags, (list, tuple)):
-            tags = [tags]
-        query = {'qname':self.name, 'processed':False}
-        query.update(self.factory.make_tag_query(tags))
-
-        return collection.find(query).count()
