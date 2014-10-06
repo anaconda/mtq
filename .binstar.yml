@@ -9,6 +9,7 @@ engine:
  - python=2.7
 
 test: 
+  - conda install setuptools
   - python setup.py develop
   - python -m unittest discover
 script:
