@@ -8,6 +8,9 @@ platform:
 engine:
  - python=2.7
 
+test: 
+  - python setup.py develop
+  - python -m unittest discover
 script:
   - conda build conda.recipe
 
