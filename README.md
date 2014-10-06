@@ -1,6 +1,10 @@
 Mongo Task Queue (mtq)
 ========================
 
+[![Binstar Badge](https://binstar.org/binstar/mtq/badges/build.svg?branch=master)](https://binstar.org/binstar/mtq/builds)
+[![Binstar Badge](https://binstar.org/binstar/mtq/badges/version.svg)](https://binstar.org/binstar/mtq)
+[![Binstar Badge](https://binstar.org/binstar/mtq/badges/installer/conda.svg)](https://conda.binstar.org/binstar)
+
  [![Build status][mtq.png]][travis]
  
  [![Coverage Status][coveralls.png]][coveralls]
