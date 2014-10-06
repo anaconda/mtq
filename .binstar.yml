@@ -9,7 +9,8 @@ engine:
  - python=2.7
 
 test: 
-  - conda install setuptools
+  - conda install pip setuptools 
+  - pip install mock
   - python setup.py develop
   - python -m unittest discover
 script:
