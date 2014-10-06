@@ -5,11 +5,7 @@ Mongo Task Queue (mtq)
 [![Binstar Badge](https://binstar.org/binstar/mtq/badges/version.svg)](https://binstar.org/binstar/mtq)
 [![Binstar Badge](https://binstar.org/binstar/mtq/badges/installer/conda.svg)](https://conda.binstar.org/binstar)
 
- [![Build status][mtq.png]][travis]
- 
- [![Coverage Status][coveralls.png]][coveralls]
-
- [![PyPI][pypi.png]][pypi]
+[![PyPI][pypi.png]][pypi]
 
 
 mtq is a simple Python library for queueing jobs and processing them in the background with workers. 
