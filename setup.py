@@ -9,8 +9,8 @@ from setuptools import setup, find_packages
 try:
     from mtq import __version__ as version
 except ImportError:
-    version = '?'
-    
+    version = 'dev'
+
 setup(
     name='mtq',
     version=version,
@@ -18,7 +18,7 @@ setup(
     author_email='sean.ross-ross@continuum.io',
     description='Mongo Task Queue',
     packages=find_packages(),
-    
+
     install_requires=['pymongo>=2.5',
                       'python-dateutil>=2.1',
                       'pytz>=2013b',

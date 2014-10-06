@@ -1,4 +1,5 @@
 {% set data = load_setuptools()%}
+
 package:
   name: {{data.get('name')}}
   version: {{data.get('version')}}
@@ -13,9 +14,16 @@ requirements:
   build:
     - python
     - setuptools
+    - pymongo
+    - dateutil
+    - pytz
   run:
     - python
+    - pymongo
+    - dateutil
+    - pytz
 
 about:
   home: {{data.get('url')}}
   license: {{data.get('license')}}
+
