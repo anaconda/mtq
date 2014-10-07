@@ -11,3 +11,4 @@ distribute_setup.py
 dist/
 .coverage
 htmlcov
+mtq/_version.py

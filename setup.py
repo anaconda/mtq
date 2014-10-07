@@ -6,9 +6,12 @@ import sys
 
 from setuptools import setup, find_packages
 
+ctx = {}
 try:
-    from mtq import __version__ as version
-except ImportError:
+    with open('mtq/_version.py') as fd:
+        exec(open('mtq/_version.py').read(), ctx)
+    version = ctx.get('__version__', 'dev')
+except IOError:
     version = 'dev'
 
 setup(

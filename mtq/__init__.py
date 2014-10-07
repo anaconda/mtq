@@ -9,7 +9,10 @@ from .job import Job
 from .schedule import Scheduler
 from mtq.defaults import _task_map
 
-__version__ = '0.6.0'
+try:
+    from _version import __version__
+except ImportError:
+    __version__ = '0.6'
 
 def default_connection():
     '''
