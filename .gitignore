@@ -12,3 +12,6 @@ dist/
 .coverage
 htmlcov
 mtq/_version.py
+__conda_*.txt
+.DS_Store
+MANIFEST

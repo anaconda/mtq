@@ -9,9 +9,9 @@ engine:
  - python=2.7
 
 test: 
-  - conda install pip setuptools 
-  - pip install mock
-  - python setup.py develop
+  - conda install -q pip setuptools
+  - pip install mock > pip-install.log
+  - python setup.py develop  > setup.log
   - python -m unittest discover
 script:
   - conda build conda.recipe
