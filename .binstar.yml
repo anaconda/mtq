@@ -9,7 +9,7 @@ engine:
  - python=2.7
 
 test: 
-  - conda install -q pip setuptools
+  - conda install -q pip setuptools pymongo dateutil pytz
   - pip install mock > pip-install.log
   - python setup.py develop  > setup.log
   - python -m unittest discover
