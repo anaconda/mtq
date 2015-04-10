@@ -159,6 +159,32 @@ class TestWorker(MTQTestCase):
 
         self.assertIsNone(worker.pop_item())
 
+    def test_unexpected_error_fail_fast(self):
+
+        worker = self.factory.new_worker(['q1'], ['linux-64'], silence=True)
+        worker.pop_item = mock.Mock()
+        worker.pop_item.side_effect = KeyError("This is expected")
+
+        with self.assertRaises(KeyError):
+            worker.start_main_loop(fail_fast=True)
+
+    def test_unexpected_error(self):
+
+        worker = self.factory.new_worker(['q1'], ['linux-64'], silence=True)
+        worker.pop_item = mock.Mock()
+        worker.pop_item.return_value = None
+
+        def side_effect(*_, **__):
+            worker.pop_item.side_effect = None
+            worker.pop_item.return_value = None
+            raise KeyError("This is expected")
+
+        worker.pop_item.side_effect = side_effect
+
+        worker.start_main_loop(batch=True, fail_fast=False)
+
+
+
 
 if __name__ == '__main__':
     unittest.main()

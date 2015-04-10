@@ -39,6 +39,8 @@ class Worker(object):
         self._post_call = None
         self.silence = silence
 
+        self.collection = self.factory.worker_collection
+
 
     worker_id = '-'
 
@@ -93,7 +95,7 @@ class Worker(object):
             return should_exit, status
         return False, 0
 
-    def work(self, one=False, batch=False, failed=False):
+    def work(self, one=False, batch=False, failed=False, fail_fast=False):
         '''
         Main work function
         
@@ -102,7 +104,7 @@ class Worker(object):
         '''
         with self.register():
             try:
-                self.start_main_loop(one, batch, failed)
+                self.start_main_loop(one, batch, failed, fail_fast)
             except KeyboardInterrupt:
                 self.logger.exception(None)
                 if not self._current:
@@ -111,9 +113,7 @@ class Worker(object):
                 self.logger.warn('Warm shutdown requested')
                 proc, job = self._current
                 proc.join(timeout=job.doc.get('timeout'))
-            except Exception:
-                if self.args.fail:
-                    raise
+                return
 
     def pop_item(self, pop_failed=False):
         job = self.factory.pop_item(worker_id=self.worker_id,
@@ -123,7 +123,7 @@ class Worker(object):
                                     )
         return job
 
-    def start_main_loop(self, one=False, batch=False, pop_failed=False):
+    def start_main_loop(self, one=False, batch=False, pop_failed=False, fail_fast=False):
         '''
         Start the main loop and process jobs
         '''
@@ -133,24 +133,31 @@ class Worker(object):
         self.logger.info('Listening for jobs queues=[%s] tags=[%s]' % (', '.join(self.queues), ', '.join(self.tags)))
 
         while 1:
+            try:
+                should_exit, status = self.check_in()
+                if should_exit:
+                    self.logger.info("Shutdown Requested (from DB)")
+                    raise SystemExit(status)
 
-            should_exit, status = self.check_in()
-            if should_exit:
-                self.logger.info("Shutdown Requested (from DB)")
-                raise SystemExit(status)
+                job = self.pop_item(pop_failed=pop_failed)
 
-            job = self.pop_item(pop_failed=pop_failed)
+                if job is None:
+                    if batch: break
+                    time.sleep(self.poll_interval)
+                    continue
 
-            if job is None:
-                if batch: break
-                time.sleep(self.poll_interval)
-                continue
+                self.process_job(job)
 
-            self.process_job(job)
+                if one: break
 
-            if one: break
+                self.logger.info('Listening for jobs queues=[%s] tags=[%s]' % (', '.join(self.queues), ', '.join(self.tags)))
 
-            self.logger.info('Listening for jobs queues=[%s] tags=[%s]' % (', '.join(self.queues), ', '.join(self.tags)))
+            except Exception as err:
+                if fail_fast: raise
+                else: self.logger.exception(err)
+
+                if one: break
+                else: continue
 
         self.logger.info('Exiting Main Loop')
 
