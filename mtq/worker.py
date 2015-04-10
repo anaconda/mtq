@@ -1,8 +1,10 @@
 from contextlib import contextmanager
 from datetime import datetime
+import getpass
 import logging
 from multiprocessing import Process
 import os
+import platform
 import signal
 import sys
 import time
@@ -18,7 +20,7 @@ class Worker(object):
     def __init__(self, factory, queues=(), tags=(), priority=0,
                  poll_interval=1, exception_handler=None,
                  log_worker_output=False, silence=False, extra_lognames=()):
-        self.name = '%s.%s' % (os.uname()[1], os.getpid())
+        self.name = '%s.%s' % (platform.node(), os.getpid())
         self.extra_lognames = extra_lognames
 
         self.queues = queues
@@ -53,9 +55,10 @@ class Worker(object):
         self.collection = self.factory.worker_collection
 
         self.worker_id = self.collection.insert({'name': self.name,
-                                                 'host': os.uname()[1],
+                                                 'host': platform.node(),
+                                                 'system': platform.system(),
                                                  'pid': os.getgid(),
-                                                 'user': os.getlogin(),
+                                                 'user': getpass.getuser(),
                                                  'started':now(),
                                                  'finished':datetime.fromtimestamp(0),
                                                  'check-in':datetime.fromtimestamp(0),
