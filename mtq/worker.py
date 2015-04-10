@@ -1,18 +1,14 @@
-'''
-Created on Aug 2, 2013
-
-@author: sean
-'''
 from contextlib import contextmanager
 from datetime import datetime
-from mtq.log import MongoStream, MongoHandler
-from mtq.utils import handle_signals, now, setup_logging2, nulltime
-from multiprocessing import Process
 import logging
+from multiprocessing import Process
 import os
+import signal
 import sys
 import time
-import signal
+
+from mtq.log import MongoStream, MongoHandler
+from mtq.utils import handle_signals, now, setup_logging2, nulltime
 
 
 class Worker(object):
@@ -173,13 +169,13 @@ class Worker(object):
 
         proc.join(timeout=job.doc.get('timeout'))
         if proc.is_alive():
-            self.logger.error('Timeout occurred: interupting job')
+            self.logger.error('Timeout occurred: interrupting job')
             os.kill(proc.pid, signal.SIGALRM)
             # Give the process 2 min to finish
             proc.join(timeout=min(job.doc.get('timeout'), 2 * 60))
 
             if proc.is_alive():
-                self.logger.error('Process did not shut down after interupt: terminating job')
+                self.logger.error('Process did not shut down after interrupt: terminating job')
                 proc.terminate()
 
         self._current = None
@@ -189,7 +185,7 @@ class Worker(object):
         if failed:
             self.logger.error('Job %s failed' % (job.doc['_id']))
         else:
-            self.logger.info('Job %s finsihed successfully' % (job.doc['_id']))
+            self.logger.info('Job %s finished successfully' % (job.doc['_id']))
 
         job.set_finished(failed)
 

@@ -1,12 +1,5 @@
-'''
-Created on Aug 2, 2013
-
-@author: sean
-'''
-from bson.objectid import ObjectId
-from datetime import datetime
 from mtq.job import Job
-from mtq.utils import now, is_str
+from mtq.utils import is_str
 
 class QueueError(Exception):
     pass
