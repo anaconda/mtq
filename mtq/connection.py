@@ -10,6 +10,8 @@ from mtq.defaults import _collection_base, _qsize, _workersize, _logsize, \
 from mtq.utils import ensure_capped_collection, now
 from time import mktime
 from pymongo import ASCENDING
+from mtq.pymongo3compat import find
+
 
 class MTQConnection(object):
     '''
@@ -151,7 +153,8 @@ class MTQConnection(object):
 
     def add_mutex(self, query):
         running_query = self.make_query(None, None, processed=True)
-        cursor = self.queue_collection.find(running_query, fields={'mutex':1, '_id':0})
+        collection = self.queue_collection
+        cursor = find(running_query, projection={'mutex':1, '_id':0}, collection=collection)
 
         if not cursor.count():
             return

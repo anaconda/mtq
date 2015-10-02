@@ -22,7 +22,7 @@ setup(
     description='Mongo Task Queue',
     packages=find_packages(),
 
-    install_requires=['pymongo>=2.5',
+    install_requires=['pymongo>=2.8',
                       'python-dateutil>=2.1',
                       'pytz>=2013b',
                       ],

@@ -201,8 +201,8 @@ def object_id(oid):
 def wait_times(conn):
     coll = conn.queue_collection
     wait = { '$avg': { '$subtract':['$started_at_', '$enqueued_at_'] } }
-    raw = coll.aggregate([{'$match':{'processed':True}}, {'$group':{'_id':'$qname', 'wait': wait } } ])
-    result = raw['result']
+    raw = coll.aggregate([{'$match':{'processed':True}}, {'$group':{'_id':'$qname', 'wait': wait } } ], cursor={})
+    result = list(raw)
     return {item['_id']:item['wait'] for item in result}
 
 def job_stats(conn, group_by='$execute.func_str', since=None):
@@ -231,9 +231,9 @@ def job_stats(conn, group_by='$execute.func_str', since=None):
                                            'latest':latest,
                                            'erliest':erliest,
                                             } }
-                          ])
+                          ], cursor={})
 
-    result = raw['result']
+    result = list(raw)
 
     return {item.pop('_id'):item for item in result}
 
