@@ -153,8 +153,8 @@ class MTQConnection(object):
 
     def add_mutex(self, query):
         running_query = self.make_query(None, None, processed=True)
-        collection = self.queue_collection
-        cursor = find(running_query, projection={'mutex':1, '_id':0}, collection=collection)
+        cursor = find(running_query, projection={'mutex':1, '_id':0},
+                      collection=self.queue_collection)
 
         if not cursor.count():
             return
