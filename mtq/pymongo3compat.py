@@ -10,8 +10,8 @@ import pymongo
 
 # Constants
 # ----------------------------------------------------------------------------
-AS_CLASS = '_pymongo3compat_as_class'
-FIND_LIKE = '_pymongo3compat_find_like_method'
+AS_CLASS = 'pymongo3compat_as_class'
+FIND_LIKE = 'pymongo3compat_find_like_method'
 PYMONGO_28 = pymongo.version_tuple == (2, 8)
 PYMONGO_3 = pymongo.version_tuple[0] == 3
 RENAME_MAP = {'filter': 'spec',
@@ -41,7 +41,7 @@ class _CodecOptions:
 
     http://api.mongodb.org/python/3.0/api/bson/codec_options.html#bson.codec_options.CodecOptions
     """
-    def __init__(self, document_class):
+    def __init__(self, document_class=None):
         self.document_class = document_class
 
 
@@ -91,18 +91,19 @@ def _find_like_method(*args, **kwargs):
     Helper method that adapts the find_like methods so that code looks like
     pymongo3.x but can run on both 2.8 and 3.x series
     """
-    collection = kwargs.pop('collection', None)
     method = kwargs.pop(FIND_LIKE, None)
+    collection = kwargs.pop('collection', None)
     func = getattr(collection, method, None)
 
-    as_class = kwargs.pop(AS_CLASS, None)
-
-    if not collection or not method or not func:
+    if not (collection and method and func):
         raise PyMongoMigrationHelperError
 
     if PYMONGO_28:
         kwargs = _fix_kwargs(kwargs)
-        if as_class:
+
+        # Any non existing attributes will be returned as a Collection
+        as_class = getattr(collection, AS_CLASS)
+        if not isinstance(as_class, pymongo.collection.Collection):
             kwargs['as_class'] = as_class
         cursor_or_document = func(*args, **kwargs)
     elif PYMONGO_3:
@@ -145,15 +146,15 @@ def with_options(codec_options=None, collection=None):
 
     http://api.mongodb.org/python/3.0/api/pymongo/collection.html#pymongo.collection.Collection.with_options
     """
-    if not collection or not codec_options:
+    if not (collection and codec_options):
         raise PyMongoMigrationHelperError
 
     if PYMONGO_28:
-        if codec_options:
-            as_class = codec_options.document_class
+        if codec_options is not None:
+            as_class = getattr(codec_options, 'document_class', None)
+            setattr(collection, AS_CLASS, as_class)
         else:
-            as_class = None
-        setattr(collection, AS_CLASS, as_class)
+            raise PyMongoMigrationHelperError
     elif PYMONGO_3:
         collection = collection.with_options(codec_options=codec_options)
     else:
