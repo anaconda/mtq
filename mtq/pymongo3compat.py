@@ -9,6 +9,9 @@ import pymongo
 
 
 # Constants
+# ----------------------------------------------------------------------------
+AS_CLASS = '_pymongo3compat_as_class'
+FIND_LIKE = '_pymongo3compat_find_like_method'
 PYMONGO_28 = pymongo.version_tuple == (2, 8)
 PYMONGO_3 = pymongo.version_tuple[0] == 3
 RENAME_MAP = {'filter': 'spec',
@@ -16,6 +19,8 @@ RENAME_MAP = {'filter': 'spec',
               'allow_partial_results': 'partial'}
 
 
+# Error types
+# ----------------------------------------------------------------------------
 class Error(Exception):
     pass
 
@@ -28,6 +33,8 @@ class PyMongoMigrationHelperError(Error):
     pass
 
 
+# Helpers
+# ----------------------------------------------------------------------------
 class _CodecOptions:
     """
     Mock CodecOption object for use with pymongo 2.8.
@@ -85,15 +92,18 @@ def _find_like_method(*args, **kwargs):
     pymongo3.x but can run on both 2.8 and 3.x series
     """
     collection = kwargs.pop('collection', None)
-    method = kwargs.pop('find_like_method', None)
+    method = kwargs.pop(FIND_LIKE, None)
     func = getattr(collection, method, None)
+
+    as_class = kwargs.pop(AS_CLASS, None)
 
     if not collection or not method or not func:
         raise PyMongoMigrationHelperError
 
     if PYMONGO_28:
         kwargs = _fix_kwargs(kwargs)
-        kwargs['as_class'] = collection._as_class
+        if as_class:
+            kwargs['as_class'] = as_class
         cursor_or_document = func(*args, **kwargs)
     elif PYMONGO_3:
         cursor_or_document = func(*args, **kwargs)
@@ -103,11 +113,13 @@ def _find_like_method(*args, **kwargs):
     return cursor_or_document
 
 
+# Wrapper functions
+# ----------------------------------------------------------------------------
 def find(*args, **kwargs):
     """
     Wraps the find method making the syntax similar to pymongo3.x.
     """
-    kwargs['find_like_method'] = 'find'
+    kwargs[FIND_LIKE] = 'find'
     return _find_like_method(*args, **kwargs)
 
 
@@ -115,7 +127,7 @@ def find_and_modify(*args, **kwargs):
     """
     Wraps the find_and_modify method making the syntax similar to pymongo3.x.
     """
-    kwargs['find_like_method'] = 'find_and_modify'
+    kwargs[FIND_LIKE] = 'find_and_modify'
     return _find_like_method(*args, **kwargs)
 
 
@@ -123,7 +135,7 @@ def find_one(*args, **kwargs):
     """
     Wraps the find_one method making the syntax similar to pymongo3.x.
     """
-    kwargs['find_like_method'] = 'find_one'
+    kwargs[FIND_LIKE] = 'find_one'
     return _find_like_method(*args, **kwargs)
 
 
@@ -137,7 +149,11 @@ def with_options(codec_options=None, collection=None):
         raise PyMongoMigrationHelperError
 
     if PYMONGO_28:
-        collection._as_class = codec_options.document_class
+        if codec_options:
+            as_class = codec_options.document_class
+        else:
+            as_class = None
+        setattr(collection, AS_CLASS, as_class)
     elif PYMONGO_3:
         collection = collection.with_options(codec_options=codec_options)
     else:
