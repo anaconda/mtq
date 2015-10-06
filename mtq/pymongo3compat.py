@@ -105,6 +105,7 @@ def _find_like_method(*args, **kwargs):
         as_class = getattr(collection, AS_CLASS)
         if not isinstance(as_class, pymongo.collection.Collection):
             kwargs['as_class'] = as_class
+            setattr(collection, AS_CLASS, None)  # Reset value for collection
         cursor_or_document = func(*args, **kwargs)
     elif PYMONGO_3:
         cursor_or_document = func(*args, **kwargs)
