@@ -1,5 +1,5 @@
 mongomock==1.0.1
-pymongo==2.5.2
+pymongo==2.8
 python-dateutil==2.1
 coverage==3.6
 pytz>=2013b

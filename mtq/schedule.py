@@ -9,6 +9,9 @@ from datetime import timedelta
 from mtq.utils import now
 import logging
 
+from mtq.pymongo3compat import find_and_modify
+
+
 class Scheduler(object):
     
     def __init__(self, factory):
@@ -57,7 +60,7 @@ class Scheduler(object):
         collection = self.factory.schedule_collection
         query = {'_id':doc['_id'], 'checked': doc['checked']}
         update = {'$set': {'checked': n}}
-        return bool(collection.find_and_modify(query, update, fields=[]))
+        return bool(find_and_modify(query, update, projection=[], collection=collection))
     
 
     def enqueue_from_rule(self, rule):
