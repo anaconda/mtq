@@ -44,6 +44,13 @@ class TestWorker(MTQTestCase):
         workers = list(self.factory.workers)
         self.assertEqual(len(workers), 0)
 
+    def read_log(self, job_id):
+        entries = list(self.db.mq.log.find({'job_id': job_id}))
+        self.assertEqual(len(entries), 1)
+        entry = entries[0]
+        self.assertIn('message', entry)
+        return entry['message']
+
     @mock.patch('mtq.worker.handle_signals')
     @mock.patch('mtq.tests.fixture.test_func')
     def test_sync_process(self, test_func, handle_signals):
@@ -59,6 +66,10 @@ class TestWorker(MTQTestCase):
         handle_signals.assert_called_once_with()
         test_func.assert_called_once_with(1, 2)
 
+        msg = self.read_log(job_id='abc')
+        self.assertIn('Starting Job', msg)
+        self.assertIn('finished successfully', msg)
+
         pre = mock.Mock('pre')
         post = mock.Mock('post')
         worker.set_pre(pre)
@@ -73,7 +84,7 @@ class TestWorker(MTQTestCase):
     def test_sync_process_failure(self, test_func, handle_signals):
         job = mtq.Job(self.factory, {'execute':{'func_str':'mtq.tests.fixture.test_func_fail',
                                                 'args':(1, 2), 'kwargs':{}},
-                                     '_id':'abc',
+                                     '_id':'abc2',
                                      'qname':'qname',
                                      })
 
@@ -85,6 +96,11 @@ class TestWorker(MTQTestCase):
 
         with self.assertRaises(Exception):
             worker._process_job(job)
+
+        msg = self.read_log(job_id='abc2')
+        self.assertIn('Starting Job', msg)
+        self.assertIn('Exception', msg)
+        self.assertNotIn('finished successfully', msg)
 
         pre.assert_called_once_with(job)
         post.assert_called_once_with(job)
@@ -100,7 +116,7 @@ class TestWorker(MTQTestCase):
     def test_process(self):
         job = mtq.Job(self.factory, {'execute':{'func_str':'mtq.tests.fixture.test_func',
                                                 'args':(1, 2), 'kwargs':{}},
-                                     '_id':'abc',
+                                     '_id':'abc3',
                                      'qname':'qname',
                                      'tags':[],
                                      })
@@ -113,7 +129,7 @@ class TestWorker(MTQTestCase):
     def test_process_error(self):
         job = mtq.Job(self.factory, {'execute':{'func_str':'mtq.tests.fixture.test_func_fail',
                                                 'args':(1, 2), 'kwargs':{}},
-                                     '_id':'abc',
+                                     '_id':'abc4',
                                      'qname':'qname',
                                      'tags':[],
                                      })
