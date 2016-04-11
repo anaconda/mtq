@@ -206,7 +206,7 @@ class Worker(object):
         '''
         handle_signals()
 
-        with setup_logging(self.factory.logging_collection, self.worker_id, job.id, lognames=self.extra_lognames):
+        with setup_logging(self.factory.logging_collection, job.id, lognames=self.extra_lognames):
             try:
                 self._pre(job)
                 job.apply()

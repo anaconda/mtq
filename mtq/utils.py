@@ -143,7 +143,7 @@ Job Log:
 
 
 @contextmanager
-def setup_logging(collection, worker_id, job_id, lognames=()):
+def setup_logging(collection, job_id, lognames=()):
     """
     set up logging for worker
     """
