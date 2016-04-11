@@ -13,8 +13,7 @@ from bson.objectid import ObjectId
 from contextlib import contextmanager
 import io
 import pytz
-from mtq import errors
-from mtq.log import MongoHandler
+from mtq.errors import Timeout
 
 
 class ImportStringError(Exception):
@@ -46,7 +45,7 @@ def handle_signals():
         signal.signal(signal.SIGINT, signal.default_int_handler)
 
     def raise_timeout(signum, frame):
-        raise errors.Timeout()
+        raise Timeout()
 
     def term_handler(signum, frame):
         traceback.print_stack(frame)
@@ -143,9 +142,15 @@ Job Log:
 
 
 @contextmanager
-def setup_logging(collection, job_id, lognames=()):
+def setup_logging(collection, job_id):
     """
-    set up logging for worker
+    Set up logging for worker.
+
+    All log messages will be captured and saved into a document in the
+    specified database collection.
+
+    Additionally, the `job` logger will record start/end messages,
+    with full logs exported only in the case of failure.
     """
 
     # create a handler that will capture specified logs in memory
@@ -154,35 +159,39 @@ def setup_logging(collection, job_id, lognames=()):
     record_hndlr.setFormatter(UnicodeFormatter())
     record_hndlr.setLevel(logging.INFO)
 
-    # attach handler to specified loggers
+    # configure root logger to capture all messages
+    rootLogger = logging.getLogger()
+    rootLogger.setLevel(logging.INFO)
+    rootLogger.addHandler(record_hndlr)
+
     job_log = logging.getLogger('job')
     job_log.setLevel(logging.INFO)
-
-    for name in lognames + ['job']:
-        logging.getLogger(name).addHandler(record_hndlr)
-
-    # attach a global handler that will log output from this job
-    # into a specified database collection (default 'mq.log')
-    db_handler = MongoHandler(collection, {'job_id': job_id})
-    db_handler.setLevel(logging.INFO)
-    logging.getLogger().addHandler(db_handler)
-
     job_log.info('Starting Job %s' % job_id)
 
     try:
         # Run the job
         yield
-    except:
+    except Exception as exc:
+        # Record the stack trace, then stop recording
+        rootLogger.exception(exc)
+        rootLogger.removeHandler(record_hndlr)
+
         # Dump saved logs into the job log
         text = record.getvalue().replace('\n', '\n   | ')
         msg = mgs_template % (job_id, text,)
         job_log.exception(msg)
         raise
     else:
-        # Drop saved logs, just record success
+        # Just record success in job log
         job_log.info("Job %s finished successfully" % (job_id,))
+        rootLogger.removeHandler(record_hndlr)
     finally:
-        pass
+        log_entry = {
+            'job_id': job_id,
+            'message': record.getvalue(),
+            'timestamp': now()
+        }
+        collection.insert(log_entry)
 
 
 def now():
