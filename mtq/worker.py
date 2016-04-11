@@ -10,10 +10,12 @@ import sys
 import time
 
 from mtq.log import MongoStream, MongoHandler
-from mtq.utils import handle_signals, now, setup_logging2, nulltime
+from mtq.utils import handle_signals, now, setup_logging, nulltime
 
 
 class Worker(object):
+    worker_id = '-'
+
     '''
     Should create a worker from MTQConnection.new_worker
     '''
@@ -41,15 +43,12 @@ class Worker(object):
 
         self.collection = self.factory.worker_collection
 
-
-    worker_id = '-'
-
     @contextmanager
     def register(self):
         '''
         Internal
         Contextmanager, register the birth and death of this worker
-        
+
         eg::
             with worker.register():
                 # Work
@@ -61,10 +60,10 @@ class Worker(object):
                                                  'system': platform.system(),
                                                  'pid': os.getgid(),
                                                  'user': getpass.getuser(),
-                                                 'started':now(),
-                                                 'finished':datetime.fromtimestamp(0),
-                                                 'check-in':datetime.fromtimestamp(0),
-                                                 'working':True,
+                                                 'started': now(),
+                                                 'finished': datetime.fromtimestamp(0),
+                                                 'check-in': datetime.fromtimestamp(0),
+                                                 'working': True,
                                                  'queues': self.queues,
                                                  'tags': self.tags,
                                                  'log_output': bool(self._log_worker_output),
@@ -72,7 +71,7 @@ class Worker(object):
                                                  'terminate_status': 0,
                                                  })
         if self._log_worker_output:
-            hdlr = MongoHandler(self.factory.logging_collection, {'worker_id':self.worker_id})
+            hdlr = MongoHandler(self.factory.logging_collection, {'worker_id': self.worker_id})
             self.logger.addHandler(hdlr)
         try:
             yield self.worker_id
@@ -81,13 +80,13 @@ class Worker(object):
                 self.logger.removeHandler(hdlr)
 
             query = {'_id': self.worker_id}
-            update = {'$set':{'finished':now(), 'working':False}}
+            update = {'$set': {'finished': now(), 'working': False}}
             self.collection.update(query, update)
 
     def check_in(self):
 
         query = {'_id': self.worker_id}
-        update = {'$set':{'check-in':now(), 'working':True}}
+        update = {'$set': {'check-in': now(), 'working': True}}
         worker_info = self.collection.find_and_modify(query, update)
         if worker_info:
             should_exit = worker_info.get('terminate', False)
@@ -98,9 +97,9 @@ class Worker(object):
     def work(self, one=False, batch=False, failed=False, fail_fast=False):
         '''
         Main work function
-        
+
         :param one: wait for the first job execute and then exit
-        :param batch: work until the queue is empty, then exit 
+        :param batch: work until the queue is empty, then exit
         '''
         with self.register():
             try:
@@ -127,10 +126,13 @@ class Worker(object):
         '''
         Start the main loop and process jobs
         '''
-        self.logger.info('Starting Main Loop mogno-host=%s mongo-db=%s' % (self.factory.db.connection.host,
-                                                                           self.factory.db.name))
+        self.logger.info('Starting Main Loop mogno-host=%s mongo-db=%s' % (
+            self.factory.db.connection.host,
+            self.factory.db.name))
         self.logger.info('Starting Main Loop worker=%s _id=%s' % (self.name, self.worker_id))
-        self.logger.info('Listening for jobs queues=[%s] tags=[%s]' % (', '.join(self.queues), ', '.join(self.tags)))
+        self.logger.info('Listening for jobs queues=[%s] tags=[%s]' % (
+            ', '.join(self.queues),
+            ', '.join(self.tags)))
 
         while 1:
             try:
@@ -142,22 +144,29 @@ class Worker(object):
                 job = self.pop_item(pop_failed=pop_failed)
 
                 if job is None:
-                    if batch: break
+                    if batch:
+                        break
                     time.sleep(self.poll_interval)
                     continue
 
                 self.process_job(job)
 
-                if one: break
+                if one:
+                    break
 
-                self.logger.info('Listening for jobs queues=[%s] tags=[%s]' % (', '.join(self.queues), ', '.join(self.tags)))
+                self.logger.info('Listening for jobs queues=[%s] tags=[%s]' % (
+                    ', '.join(self.queues), ', '.join(self.tags)))
 
             except Exception as err:
-                if fail_fast: raise
-                else: self.logger.exception(err)
+                if fail_fast:
+                    raise
+                else:
+                    self.logger.exception(err)
 
-                if one: break
-                else: continue
+                if one:
+                    break
+                else:
+                    continue
 
         self.logger.info('Exiting Main Loop')
 
@@ -165,7 +174,8 @@ class Worker(object):
         '''
         Process a single job in a multiprocessing.Process
         '''
-        self.logger.info('Popped Job _id=%s queue=%s tags=%s' % (job.id, job.qname, ', '.join(job.tags)))
+        self.logger.info('Popped Job _id=%s queue=%s tags=%s' % (
+            job.id, job.qname, ', '.join(job.tags)))
         self.logger.info(job.call_str)
 
         proc = Process(target=self._process_job, args=(job,))
@@ -199,14 +209,14 @@ class Worker(object):
 
         job.set_finished(failed)
 
-        return  failed
+        return failed
 
     def _process_job(self, job):
         '''
         '''
         handle_signals()
 
-        with setup_logging2(self.worker_id, job.id, lognames=self.extra_lognames):
+        with setup_logging(self.factory.logging_collection, job.id):
             try:
                 self._pre(job)
                 job.apply()
@@ -219,10 +229,12 @@ class Worker(object):
                 self._post(job)
 
     def _pre(self, job):
-        if self._pre_call: self._pre_call(job)
+        if self._pre_call:
+            self._pre_call(job)
 
     def _post(self, job):
-        if self._post_call: self._post_call(job)
+        if self._post_call:
+            self._post_call(job)
 
     def set_pre(self, func):
         self._pre_call = func
@@ -239,6 +251,7 @@ class Worker(object):
         return self.factory._items_cursor(queues=self.queues,
                                           tags=self.tags,
                                           ).count()
+
 
 class WorkerProxy(object):
     'This is a representation of an actual worker process'
@@ -291,8 +304,5 @@ class WorkerProxy(object):
     def finished(self):
         'test if this worker is finished'
         coll = self.factory.worker_collection
-        cursor = coll.find({'_id':self.id, 'working':False})
+        cursor = coll.find({'_id': self.id, 'working': False})
         return bool(cursor.count())
-
-
-

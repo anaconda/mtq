@@ -16,7 +16,7 @@ def main():
     loader = unittest.loader.TestLoader()
     tests = loader.discover(dirname(__file__))
     runner = unittest.TextTestRunner()
-    runner.run(tests) 
+    runner.run(tests)
     cov.stop()
     cov.save()
     cov.report()
