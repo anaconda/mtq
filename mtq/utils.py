@@ -14,6 +14,7 @@ from contextlib import contextmanager
 import io
 import pytz
 from mtq import errors
+from mtq.log MongoHandler
 
 class ImportStringError(Exception):
     pass
@@ -128,51 +129,49 @@ class UnicodeFormatter(logging.Formatter):
 mgs_template = """Job %s exited with exception:
 Job Log:
    | %s
-        
+
 """
 @contextmanager
-def setup_logging2(worker_id, job_id, lognames=()):
+def setup_logging(collection, worker_id, job_id, lognames=()):
+    """
+    set up logging for worker
+    """
 
+    # create a handler that will capture specified logs in memory
     record = io.StringIO()
     record_hndlr = logging.StreamHandler(record)
     record_hndlr.setFormatter(UnicodeFormatter())
     record_hndlr.setLevel(logging.INFO)
 
-    logger = logging.getLogger('job')
+    # attach handler to specified loggers
+    job_log = logging.getLogger('job')
+    job_log.setLevel(logging.INFO)
 
-    logger.setLevel(logging.INFO)
-    loggers = [logger] + [logging.getLogger(name) for name in lognames]
+    for name in lognames + ['job']:
+        logging.getLogger(name).addHandler(record_hndlr)
 
-    [l.addHandler(record_hndlr) for l in loggers]
+    # attach a global handler that will log output from this job
+    # into a specified database collection (default 'mq.log')
+    db_handler = MongoHandler(collection, {'job_id': job_id})
+    db_handler.setLevel(logging.INFO)
+    logging.getLogger().addHandler(db_handler)
 
-    logger.info('Starting Job %s' % job_id)
+    job_log.info('Starting Job %s' % job_id)
 
     try:
-        yield loggers
+        # Run the job
+        yield
     except:
+        # Dump saved logs into the job log
         text = record.getvalue().replace('\n', '\n   | ')
         msg = mgs_template % (job_id, text,)
-        logger.exception(msg)
+        job_log.exception(msg)
         raise
     else:
-        logger.info("Job %s finished successfully" % (job_id,))
+        # Drop saved logs, just record success
+        job_log.info("Job %s finished successfully" % (job_id,))
     finally:
         pass
-
-def setup_logging(worker_id, job_id, silence=False):
-    '''
-    set up logging for worker
-    '''
-    from mtq.log import mstream, MongoHandler
-
-    doc = {'worker_id':worker_id, 'job_id':job_id}
-    sys.stdout = mstream(collection, doc.copy(), sys.stdout, silence)
-    sys.sterr = mstream(collection, doc.copy(), sys.stderr, silence)
-
-    logger = logging.getLogger('job')
-    logger.setLevel(logging.INFO)
-    hndlr = MongoHandler(collection, doc.copy())
-    logger.addHandler(hndlr)
 
 
 def now():

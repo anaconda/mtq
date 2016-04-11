@@ -10,7 +10,7 @@ import sys
 import time
 
 from mtq.log import MongoStream, MongoHandler
-from mtq.utils import handle_signals, now, setup_logging2, nulltime
+from mtq.utils import handle_signals, now, setup_logging, nulltime
 
 
 class Worker(object):
@@ -49,7 +49,7 @@ class Worker(object):
         '''
         Internal
         Contextmanager, register the birth and death of this worker
-        
+
         eg::
             with worker.register():
                 # Work
@@ -98,9 +98,9 @@ class Worker(object):
     def work(self, one=False, batch=False, failed=False, fail_fast=False):
         '''
         Main work function
-        
+
         :param one: wait for the first job execute and then exit
-        :param batch: work until the queue is empty, then exit 
+        :param batch: work until the queue is empty, then exit
         '''
         with self.register():
             try:
@@ -206,7 +206,7 @@ class Worker(object):
         '''
         handle_signals()
 
-        with setup_logging2(self.worker_id, job.id, lognames=self.extra_lognames):
+        with setup_logging(self.factory.logging_collection, self.worker_id, job.id, lognames=self.extra_lognames):
             try:
                 self._pre(job)
                 job.apply()
