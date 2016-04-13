@@ -10,7 +10,7 @@ import sys
 import time
 
 from mtq.log import MongoStream, MongoHandler
-from mtq.utils import handle_signals, now, setup_logging2, nulltime
+from mtq.utils import handle_signals, now, setup_logging, nulltime
 
 
 class Worker(object):
@@ -206,7 +206,7 @@ class Worker(object):
         '''
         handle_signals()
 
-        with setup_logging2(self.worker_id, job.id, lognames=self.extra_lognames):
+        with setup_logging(self.factory.logging_collection, job.id):
             try:
                 self._pre(job)
                 job.apply()

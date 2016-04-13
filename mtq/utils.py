@@ -131,48 +131,55 @@ Job Log:
         
 """
 @contextmanager
-def setup_logging2(worker_id, job_id, lognames=()):
+def setup_logging(collection, job_id):
+    """
+    Set up logging for worker.
+    All log messages will be captured and saved into a document in the
+    specified database collection.
+    Additionally, the `job` logger will record start/end messages,
+    with full logs exported only in the case of failure.
+    """
 
+    # create a handler that will capture specified logs in memory
     record = io.StringIO()
     record_hndlr = logging.StreamHandler(record)
     record_hndlr.setFormatter(UnicodeFormatter())
     record_hndlr.setLevel(logging.INFO)
 
-    logger = logging.getLogger('job')
+    # configure root logger to capture all messages
+    rootLogger = logging.getLogger()
+    rootLogger.setLevel(logging.INFO)
+    rootLogger.addHandler(record_hndlr)
 
-    logger.setLevel(logging.INFO)
-    loggers = [logger] + [logging.getLogger(name) for name in lognames]
-
-    [l.addHandler(record_hndlr) for l in loggers]
-
-    logger.info('Starting Job %s' % job_id)
+    job_log = logging.getLogger('job')
+    job_log.setLevel(logging.INFO)
+    job_log.info('Starting Job %s' % job_id)
 
     try:
-        yield loggers
-    except:
+        # Run the job
+        yield
+    except Exception as exc:
+        # Record the stack trace, then stop recording
+        rootLogger.exception(exc)
+        rootLogger.removeHandler(record_hndlr)
+
+        # Dump saved logs into the job log
         text = record.getvalue().replace('\n', '\n   | ')
         msg = mgs_template % (job_id, text,)
-        logger.exception(msg)
+        job_log.exception(msg)
         raise
     else:
-        logger.info("Job %s finished successfully" % (job_id,))
+        # Just record success in job log
+        job_log.info("Job %s finished successfully" % (job_id,))
+        rootLogger.removeHandler(record_hndlr)
     finally:
-        pass
+        log_entry = {
+            'job_id': job_id,
+            'message': record.getvalue(),
+            'timestamp': now()
+        }
+        collection.insert(log_entry)
 
-def setup_logging(worker_id, job_id, silence=False):
-    '''
-    set up logging for worker
-    '''
-    from mtq.log import mstream, MongoHandler
-
-    doc = {'worker_id':worker_id, 'job_id':job_id}
-    sys.stdout = mstream(collection, doc.copy(), sys.stdout, silence)
-    sys.sterr = mstream(collection, doc.copy(), sys.stderr, silence)
-
-    logger = logging.getLogger('job')
-    logger.setLevel(logging.INFO)
-    hndlr = MongoHandler(collection, doc.copy())
-    logger.addHandler(hndlr)
 
 
 def now():
