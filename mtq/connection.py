@@ -15,14 +15,14 @@ from mtq.pymongo3compat import find
 
 class MTQConnection(object):
     '''
-    Base object that you should use to create all other TQ objects 
-    
+    Base object that you should use to create all other TQ objects
+
     ## Init
-    
+
     :param db: mongo database
     :param collection_base: base name for collection
     :param qsize: the size of the capped collection of the queue
-    
+
     ..sealso: MTQConnection.default, MTQConnection.from_config
     '''
 
@@ -50,8 +50,8 @@ class MTQConnection(object):
     @classmethod
     def from_config(cls, config=None, client=None):
         '''
-        Create an MTQConnection from a config dict, 
-        
+        Create an MTQConnection from a config dict,
+
         :param config: configutation dict, with the parameters
             * DB_HOST
             * DB
@@ -117,7 +117,7 @@ class MTQConnection(object):
 
     def make_query(self, queues, tags, priority=0, processed=False, failed=False, **query):
         '''
-        return a mongodb query dict to get the next task in the queue 
+        return a mongodb query dict to get the next task in the queue
         '''
         query.update({
                 'priority':{'$gte':priority},
@@ -222,9 +222,9 @@ class MTQConnection(object):
     def queue(self, name='default', tags=(), priority=0):
         '''
         Create a queue object
-        
-        :param name: the name of the queue 
-        :param tags: default tags to give to jobs 
+
+        :param name: the name of the queue
+        :param tags: default tags to give to jobs
         :param priority: (not implemented yet)
         '''
 
@@ -236,9 +236,9 @@ class MTQConnection(object):
                    log_worker_output=False, poll_interval=3, args=None):
         '''
         Create a worker object
-        
+
         :param queues: names of queues to pop from (these are OR'd)
-        :param tags: jobs *must* have all these tags to be processed by this worker  
+        :param tags: jobs *must* have all these tags to be processed by this worker
         :param priority: (not implemented yet)
         :param log_worker_output: if true, log worker output to the db
         '''
@@ -270,8 +270,8 @@ class MTQConnection(object):
     def workers(self):
         '''
         List of existing workers
-        
-        :returns: a WorkerProxy object 
+
+        :returns: a WorkerProxy object
         '''
         collection = self.worker_collection
         return [mtq.WorkerProxy(self, item) for item in collection.find({'working':True})]
