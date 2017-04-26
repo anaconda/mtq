@@ -1,17 +1,17 @@
 '''
 Starts an MTQ worker.
 '''
-from argparse import ArgumentParser, ArgumentError
+from argparse import ArgumentParser
 from mtq.connection import MTQConnection
 from mtq.log import ColorStreamHandler
 from mtq.utils import config_dict, object_id
 import logging
 import mtq
-import sys
+
 logger = logging.getLogger('worker')
 
-def aux(args):
 
+def aux(args):
     logger = logging.getLogger('mq.Worker')
     logger.setLevel(logging.INFO)
     hdlr = ColorStreamHandler()
@@ -23,7 +23,6 @@ def aux(args):
     queues = config.get('QUEUES', ()) or args.queues
 
     factory = MTQConnection.from_config(config)
-
     worker = factory.new_worker(queues=queues, tags=tags, log_worker_output=args.log_output,
                                 poll_interval=args.poll_interval, args=args)
 
