@@ -44,7 +44,6 @@ class Worker(object):
 
         self.collection = self.factory.worker_collection
 
-
     worker_id = '-'
 
     @contextmanager
@@ -153,6 +152,7 @@ class Worker(object):
                 if one: break
 
                 self.logger.info('Listening for jobs queues=[%s] tags=[%s]' % (', '.join(self.queues), ', '.join(self.tags)))
+                retries = 0
 
             # Handle connection errors
             except ConnectionFailure as err:
@@ -260,6 +260,7 @@ class Worker(object):
                                           tags=self.tags,
                                           ).count()
 
+
 class WorkerProxy(object):
     'This is a representation of an actual worker process'
 
@@ -311,8 +312,5 @@ class WorkerProxy(object):
     def finished(self):
         'test if this worker is finished'
         coll = self.factory.worker_collection
-        cursor = coll.find({'_id':self.id, 'working':False})
+        cursor = coll.find({'_id': self.id, 'working': False})
         return bool(cursor.count())
-
-
-
