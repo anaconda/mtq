@@ -4,3 +4,4 @@ python-dateutil==2.1
 coverage==3.6
 pytz>=2013b
 mock==2.0
+Werkzeug==0.12.1
