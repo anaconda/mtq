@@ -6,9 +6,11 @@ import logging
 log = logging.getLogger('mtq.test')
 log.setLevel(logging.INFO)
 
+
 def test_func(*args, **kwargs):
     log.info('Running test_func')
     return args, kwargs
+
 
 def test_func_fail(*args, **kwargs):
     log.warning('Raising a test exception in test_func_fail')
@@ -17,6 +19,7 @@ def test_func_fail(*args, **kwargs):
 
 class MTQTestCase(unittest.TestCase):
     connection = None
+
     def setUp(self):
         if type(self).connection is None:
             type(self).connection = pymongo.MongoClient()
@@ -31,5 +34,3 @@ class MTQTestCase(unittest.TestCase):
         #     print('\n%s:' % coll)
         #     pprint(list(self.db[coll].find()))
         self.connection.drop_database('mtq_testing')
-
-
