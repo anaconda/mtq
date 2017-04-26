@@ -9,6 +9,9 @@ import mtq
 import unittest
 import mock
 
+from pymongo.errors import ConnectionFailure
+
+
 TEST_JOB_DATA = {'execute':{'func_str':'mtq.tests.fixture.test_func_fail',
                             'args':(1, 2), 'kwargs':{}},
                             '_id':'abc',
@@ -184,6 +187,16 @@ class TestWorker(MTQTestCase):
         with self.assertRaises(KeyError):
             worker.start_main_loop(fail_fast=True)
 
+    def test_exponential_backoff_on_connection_error(self):
+        worker = self.factory.new_worker(['q1'], ['linux-64'], silence=True)
+        worker.pop_item = mock.Mock()
+        worker.pop_item.side_effect = ConnectionFailure("This is expected")
+        with mock.patch('logging.Logger.exception') as mock_logger:
+            with self.assertRaises(ConnectionFailure):
+                worker.start_main_loop(max_retries=2)
+            self.assertEqual(mock_logger.call_count, 3)
+            mock_logger.assert_called_with('Retry limit reached (%d)', 2)
+
     def test_unexpected_error(self):
 
         worker = self.factory.new_worker(['q1'], ['linux-64'], silence=True)
@@ -198,8 +211,6 @@ class TestWorker(MTQTestCase):
         worker.pop_item.side_effect = side_effect
 
         worker.start_main_loop(batch=True, fail_fast=False)
-
-
 
 
 if __name__ == '__main__':
