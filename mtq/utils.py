@@ -128,7 +128,7 @@ class UnicodeFormatter(logging.Formatter):
 mgs_template = """Job %s exited with exception:
 Job Log:
    | %s
-        
+
 """
 @contextmanager
 def setup_logging(collection, job_id):
@@ -220,7 +220,7 @@ def job_stats(conn, group_by='$execute.func_str', since=None):
     failed = {'$sum': {'$cmp':['$failed', False]}}
     queues = {'$addToSet': '$qname'}
     tags = {'$addToSet': '$push'}
-    erliest = {'$min': '$finished_at'}
+    earliest = {'$min': '$finished_at'}
     latest = {'$max': '$finished_at'}
 
     match = {'$match':{'finished':True}}
@@ -234,9 +234,9 @@ def job_stats(conn, group_by='$execute.func_str', since=None):
                                            'count': count,
                                            'queues': queues,
                                            'tags': tags,
-                                           'failed':failed,
-                                           'latest':latest,
-                                           'erliest':erliest,
+                                           'failed': failed,
+                                           'latest': latest,
+                                           'earliest': earliest,
                                             } }
                           ], cursor={})
 
