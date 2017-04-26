@@ -8,6 +8,7 @@ import platform
 import signal
 import sys
 import time
+import random
 
 from mtq.log import MongoStream, MongoHandler
 from mtq.utils import handle_signals, now, setup_logging, nulltime
@@ -15,7 +16,7 @@ from mtq.utils import handle_signals, now, setup_logging, nulltime
 
 class Worker(object):
     '''
-    Should create a worker from MTQConnection.new_worker
+    Should create a worker from MTQConnection.new_worker.
     '''
     def __init__(self, factory, queues=(), tags=(), priority=0,
                  poll_interval=1, exception_handler=None,
@@ -49,7 +50,7 @@ class Worker(object):
         '''
         Internal
         Contextmanager, register the birth and death of this worker
-        
+
         eg::
             with worker.register():
                 # Work
@@ -98,9 +99,9 @@ class Worker(object):
     def work(self, one=False, batch=False, failed=False, fail_fast=False):
         '''
         Main work function
-        
+
         :param one: wait for the first job execute and then exit
-        :param batch: work until the queue is empty, then exit 
+        :param batch: work until the queue is empty, then exit
         '''
         with self.register():
             try:
@@ -123,7 +124,7 @@ class Worker(object):
                                     )
         return job
 
-    def start_main_loop(self, one=False, batch=False, pop_failed=False, fail_fast=False):
+    def start_main_loop(self, one=False, batch=False, pop_failed=False, fail_fast=False, max_retries=10):
         '''
         Start the main loop and process jobs
         '''
@@ -131,7 +132,7 @@ class Worker(object):
                                                                            self.factory.db.name))
         self.logger.info('Starting Main Loop worker=%s _id=%s' % (self.name, self.worker_id))
         self.logger.info('Listening for jobs queues=[%s] tags=[%s]' % (', '.join(self.queues), ', '.join(self.tags)))
-
+        retries = 0
         while 1:
             try:
                 should_exit, status = self.check_in()
@@ -140,7 +141,6 @@ class Worker(object):
                     raise SystemExit(status)
 
                 job = self.pop_item(pop_failed=pop_failed)
-
                 if job is None:
                     if batch: break
                     time.sleep(self.poll_interval)
@@ -153,11 +153,21 @@ class Worker(object):
                 self.logger.info('Listening for jobs queues=[%s] tags=[%s]' % (', '.join(self.queues), ', '.join(self.tags)))
 
             except Exception as err:
-                if fail_fast: raise
-                else: self.logger.exception(err)
-
-                if one: break
-                else: continue
+                if fail_fast:
+                    raise
+                elif (retries == max_retries):
+                    self.logger.exception('Retry limit reached (%d)', max_retries)
+                    raise
+                elif retries < max_retries:
+                    retries += 1
+                    self.logger.exception(err)
+                    sleep_time = ((2 ** retries) + random.random()) * 0.1
+                    self.logger.warn('Retrying in %.2f seconds', sleep_time)
+                    time.sleep(sleep_time)
+                else:
+                    self.logger.exception(err)
+                if one:
+                    break
 
         self.logger.info('Exiting Main Loop')
 
