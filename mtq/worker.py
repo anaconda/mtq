@@ -10,6 +10,8 @@ import sys
 import time
 import random
 
+from pymongo.errors import ConnectionFailure
+
 from mtq.log import MongoStream, MongoHandler
 from mtq.utils import handle_signals, now, setup_logging, nulltime
 
@@ -152,7 +154,8 @@ class Worker(object):
 
                 self.logger.info('Listening for jobs queues=[%s] tags=[%s]' % (', '.join(self.queues), ', '.join(self.tags)))
 
-            except Exception as err:
+            # Handle connection errors
+            except ConnectionFailure as err:
                 if fail_fast:
                     raise
                 elif (retries == max_retries):
@@ -164,6 +167,13 @@ class Worker(object):
                     sleep_time = ((2 ** retries) + random.random()) * 0.1
                     self.logger.warn('Retrying in %.2f seconds', sleep_time)
                     time.sleep(sleep_time)
+                else:
+                    self.logger.exception(err)
+                if one:
+                    break
+            except Exception as err:
+                if fail_fast:
+                    raise
                 else:
                     self.logger.exception(err)
                 if one:
