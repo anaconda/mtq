@@ -1,6 +1,6 @@
-'''
+"""
 Starts an MTQ worker.
-'''
+"""
 from argparse import ArgumentParser, ArgumentError
 from mtq.connection import MTQConnection
 from mtq.log import ColorStreamHandler
@@ -9,6 +9,7 @@ import logging
 import mtq
 import sys
 logger = logging.getLogger('worker')
+
 
 def aux(args):
 
@@ -28,7 +29,7 @@ def aux(args):
                                 poll_interval=args.poll_interval, args=args)
 
     if args.backlog:
-        print worker.num_backlog
+        print(worker.num_backlog)
         return
 
     if config.get('exception_handler'):
@@ -51,7 +52,8 @@ def aux(args):
 
 
 def main():
-    parser = ArgumentParser(description=__doc__, version='Mongo Task Queue (mtq) v%s' % mtq.__version__, add_help=False)
+    parser = ArgumentParser(description=__doc__, version='Mongo Task Queue (mtq) v%s'
+                            % mtq.__version__, add_help=False)
     parser.add_argument('-c', '--config', help='Python module containing MTQ settings.')
 
     args, _ = parser.parse_known_args()
@@ -59,7 +61,8 @@ def main():
     add_extra_arguments = config.get('extra_arguments')
     init_config = config.get('init')
 
-    parser = ArgumentParser(description=__doc__, version='Mongo Task Queue (mtq) v%s' % mtq.__version__, add_help=True)
+    parser = ArgumentParser(description=__doc__,
+                            version='Mongo Task Queue (mtq) v%s' % mtq.__version__, add_help=True)
     parser.add_argument('-c', '--config', help='Python module containing MTQ settings.')
 
     parser.add_argument('queues', nargs='*', default=['default'], help='The queues to listen on (default: %(default)r)')
