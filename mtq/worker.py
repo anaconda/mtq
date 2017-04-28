@@ -41,7 +41,6 @@ class Worker(object):
 
         self.collection = self.factory.worker_collection
 
-
     worker_id = '-'
 
     @contextmanager
@@ -49,7 +48,7 @@ class Worker(object):
         '''
         Internal
         Contextmanager, register the birth and death of this worker
-        
+
         eg::
             with worker.register():
                 # Work
@@ -98,9 +97,9 @@ class Worker(object):
     def work(self, one=False, batch=False, failed=False, fail_fast=False):
         '''
         Main work function
-        
+
         :param one: wait for the first job execute and then exit
-        :param batch: work until the queue is empty, then exit 
+        :param batch: work until the queue is empty, then exit
         '''
         with self.register():
             try:
@@ -127,7 +126,7 @@ class Worker(object):
         '''
         Start the main loop and process jobs
         '''
-        self.logger.info('Starting Main Loop mogno-host=%s mongo-db=%s' % (self.factory.db.connection.host,
+        self.logger.info('Starting Main Loop mongo-host=%s mongo-db=%s' % (self.factory.db.connection.host,
                                                                            self.factory.db.name))
         self.logger.info('Starting Main Loop worker=%s _id=%s' % (self.name, self.worker_id))
         self.logger.info('Listening for jobs queues=[%s] tags=[%s]' % (', '.join(self.queues), ', '.join(self.tags)))
