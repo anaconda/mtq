@@ -1,8 +1,7 @@
-{% set data = load_setuptools()%}
 
 package:
-  name: {{data.get('name')}}
-  version: {{data.get('version')}}
+  name: mtq
+  version: 0.7.1
 
 build:
   number: {{environ.get('BINSTAR_BUILD', 1)}}
@@ -25,6 +24,7 @@ requirements:
     - pytz
 
 about:
-  home: {{data.get('url')}}
-  license: {{data.get('license')}}
+  home: https://github.com/Anaconda-Platform/mtq
+  license: UNKNOWN
+
 

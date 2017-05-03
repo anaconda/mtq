@@ -12,7 +12,8 @@ from mtq.defaults import _task_map
 try:
     from _version import __version__
 except ImportError:
-    __version__ = '0.6'
+    __version__ = '0.7.1'
+
 
 def default_connection():
     '''
@@ -20,15 +21,16 @@ def default_connection():
     '''
     return MTQConnection.default()
 
+
 def create_connection(db,
-           collection_base=defaults._collection_base,
-           qsize=defaults._qsize,
-           workersize=defaults._workersize,
-           logsize=defaults._logsize,
-           extra_lognames=()):
+                      collection_base=defaults._collection_base,
+                      qsize=defaults._qsize,
+                      workersize=defaults._workersize,
+                      logsize=defaults._logsize,
+                      extra_lognames=()):
     '''
     Create a new mtq instance to created queues, workers, and jobs
-    
+
     :param db: mongo database
     :param collection_base: base name for collection
     :param qsize: the size of the capped collection of the queue
@@ -36,10 +38,11 @@ def create_connection(db,
     '''
     return MTQConnection(db, collection_base, qsize, workersize, logsize, extra_lognames)
 
+
 def from_config(config=None, client=None):
     '''
     Create a new mtq instance to created queues, workers, and jobs
-    
+
     :param config: configutation dict, with the parameters
         * DB_HOST
         * DB
@@ -60,5 +63,3 @@ def task(func=None, name=None):
         return inner
     else:
         return inner(func)
-
-
