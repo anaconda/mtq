@@ -15,15 +15,20 @@ import io
 import pytz
 from mtq import errors
 
+
 class ImportStringError(Exception):
     pass
 
+
 is_py3 = lambda: sys.version_info.major >= 3
+
+
 def is_str(obj):
     if is_py3():
         return isinstance(obj, str)
     else:
         return isinstance(obj, basestring)
+
 
 def is_unicode(obj):
     if is_py3():
@@ -50,6 +55,7 @@ def handle_signals():
     signal.signal(signal.SIGINT, handler)
     signal.signal(signal.SIGTERM, term_handler)
     signal.signal(signal.SIGALRM, raise_timeout)
+
 
 def import_string(import_name, silent=False):
     """Imports an object based on a string.  This is useful if you want to
@@ -93,12 +99,13 @@ def import_string(import_name, silent=False):
         if not silent:
             raise (ImportStringError(import_name, e), None, sys.exc_info()[2])
 
+
 def ensure_capped_collection(db, collection_name, size_mb):
     '''
     '''
     if collection_name not in db.collection_names():
         db.create_collection(collection_name, capped=True,
-                          size=(1024.**2) * size_mb)  # Mb
+                             size=(1024.**2) * size_mb)  # Mb
 
     return db[collection_name]
 
@@ -117,6 +124,7 @@ def stream_logging(silence=False):
     sys.stdout = stdout
     sys.stderr = stderr
 
+
 class UnicodeFormatter(logging.Formatter):
     def format(self, record):
         msg = logging.Formatter.format(self, record)
@@ -130,6 +138,8 @@ Job Log:
    | %s
 
 """
+
+
 @contextmanager
 def setup_logging(collection, job_id):
     """
@@ -181,21 +191,21 @@ def setup_logging(collection, job_id):
         collection.insert(log_entry)
 
 
-
 def now():
     now = datetime.utcnow()
     return now.replace(tzinfo=pytz.utc)
 
+
 def nulltime():
     dt = datetime.utcfromtimestamp(0)
     return dt.replace(tzinfo=pytz.utc)
+
 
 def config_dict(filename):
     config = {}
     if filename:
         return vars(import_string(filename))
     return config
-
 
 
 def object_id(oid):
@@ -211,6 +221,7 @@ def wait_times(conn):
     raw = coll.aggregate([{'$match':{'processed':True}}, {'$group':{'_id':'$qname', 'wait': wait } } ], cursor={})
     result = list(raw)
     return {item['_id']:item['wait'] for item in result}
+
 
 def job_stats(conn, group_by='$execute.func_str', since=None):
     coll = conn.queue_collection
@@ -228,23 +239,21 @@ def job_stats(conn, group_by='$execute.func_str', since=None):
     if since:
         match['$match']['finished_at'] = {'$gt':since}
 
-    raw = coll.aggregate([match, {'$group':{'_id':group_by,
-                                           'duration': duration,
-                                           'wait_in_queue': wait,
-                                           'count': count,
-                                           'queues': queues,
-                                           'tags': tags,
-                                           'failed': failed,
-                                           'latest': latest,
-                                           'earliest': earliest,
-                                            } }
+    raw = coll.aggregate([match, {'$group': {'_id': group_by,
+                                             'duration': duration,
+                                             'wait_in_queue': wait,
+                                             'count': count,
+                                             'queues': queues,
+                                             'tags': tags,
+                                             'failed': failed,
+                                             'latest': latest,
+                                             'earliest': earliest,
+                                             }}
                           ], cursor={})
 
     result = list(raw)
 
     return {item.pop('_id'):item for item in result}
-
-
 
 
 def shutdown_worker(conn, worker_id=None):
@@ -257,6 +266,7 @@ def shutdown_worker(conn, worker_id=None):
 
     print(coll.update(query, {'$set':{'terminate':True}}, multi=True))
 
+
 def last_job(conn, worker_id):
     coll = conn.queue_collection
     cursor = coll.find({'worker_id': worker_id}).sort('enqueued_at', -1)
@@ -265,7 +275,3 @@ def last_job(conn, worker_id):
     if doc:
         from mtq.job import Job
         return Job(conn, doc)
-
-
-
-
