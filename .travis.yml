@@ -5,6 +5,11 @@ python:
   - "3.4"
   - "3.5"
   - "3.6"
+
+# start services
+services:
+  - mongodb
+
 # command to install dependencies
 install:
   - "pip install ."
