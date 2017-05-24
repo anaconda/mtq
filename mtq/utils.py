@@ -110,21 +110,6 @@ def ensure_capped_collection(db, collection_name, size_mb):
     return db[collection_name]
 
 
-@contextmanager
-def stream_logging(silence=False):
-    from mtq.log import IOStreamLogger
-
-    stdout = sys.stdout
-    sys.stdout = IOStreamLogger(sys.stdout, silence)
-
-    stderr = sys.stderr
-    sys.stderr = IOStreamLogger(sys.stderr, silence)
-    yield sys.stdout, sys.stderr
-
-    sys.stdout = stdout
-    sys.stderr = stderr
-
-
 class UnicodeFormatter(logging.Formatter):
     def format(self, record):
         msg = logging.Formatter.format(self, record)
