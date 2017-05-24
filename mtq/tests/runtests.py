@@ -25,7 +25,6 @@ def main():
     cov.report()
 
     # Exit code depends on tests result
-    import ipdb; ipdb.set_trace()
     sys.exit(0 if result.wasSuccessful() else -1)
 
 if __name__ == '__main__':
