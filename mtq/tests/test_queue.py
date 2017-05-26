@@ -8,7 +8,7 @@ import mtq.tests.fixture
 from mtq.utils import now
 import unittest
 from mtq.queue import QueueError
-import time
+
 
 class TestQueue(MTQTestCase):
 
@@ -48,13 +48,10 @@ class TestQueue(MTQTestCase):
         with self.assertRaises(TypeError):
             q.enqueue_call('fine', kwargs='str')
 
-
     def test_enqueue(self):
         'Creating queues.'
         q = self.factory.queue('my-queue', ['tags'])
-
         q.enqueue('call-me')
-
 
     def test_jobs(self):
         'Creating queues.'
@@ -74,10 +71,10 @@ class TestQueue(MTQTestCase):
         q = self.factory.queue('example')
         self.assertEqual(q.is_empty(), True)
 
-        self.factory.queue_collection.insert({'qname':'example',
+        self.factory.queue_collection.insert({'qname': 'example',
                                               'process_after': now(),
                                               'priority': 0,
-                                              'processed':False
+                                              'processed': False
                                               })
         self.assertEqual(q.is_empty(), False)
 
@@ -86,12 +83,8 @@ class TestQueue(MTQTestCase):
         q = self.factory.queue('my-queue')
         q.enqueue_call('call-me', tags=['1', '2'])
         q.enqueue_call('call-me', tags=['2', '3'])
-
         self.assertEqual(q.count, 2)
-
         self.assertEqual(q.all_tags, set(['1', '2', '3']))
-
-
 
     def test_pop(self):
         q = self.factory.queue('my-queue')
@@ -142,7 +135,6 @@ class TestQueue(MTQTestCase):
         self.assertIsNotNone(job2)
         self.assertIsNotNone(job3)
         self.assertIsNone(job4)
-
 
 
 if __name__ == '__main__':
