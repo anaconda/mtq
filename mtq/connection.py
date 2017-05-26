@@ -81,8 +81,7 @@ class MTQConnection(object):
         job = self.get_job(job_id)
         return job.stream()
 
-    def worker_stream(self, worker_name=None,
-                            worker_id=None):
+    def worker_stream(self, worker_name=None, worker_id=None):
         '''
         Get a file like object for the output of a worker
         '''
@@ -150,7 +149,6 @@ class MTQConnection(object):
 
         return tag_query
 
-
     def add_mutex(self, query):
         running_query = self.make_query(None, None, processed=True)
         cursor = find(running_query, projection={'mutex':1, '_id':0},
@@ -172,7 +170,8 @@ class MTQConnection(object):
             mutex[mutext_key] += 1
 
         # Query should inclue jobs with no mutex key or where its key is not in any running jobs
-        _or = [{'mutex': None}, {'mutex': {'$exists': False}}, {'mutex.key': {'$nin': mutex.keys()}}]
+        _or = [{'mutex': None}, {'mutex': {'$exists': False}},
+               {'mutex.key': {'$nin': list(mutex.keys())}}]
 
         # Query should inclue jobs where the mutex.count is > the # already running
         for key, already_running in mutex.items():
@@ -230,8 +229,6 @@ class MTQConnection(object):
 
         return mtq.Queue(self, name, tags, priority)
 
-
-
     def new_worker(self, queues=(), tags=(), priority=0, silence=False,
                    log_worker_output=False, poll_interval=3, args=None):
         '''
@@ -250,9 +247,9 @@ class MTQConnection(object):
         self.worker = worker
         return worker
 
-    #===========================================================================
+    # ===========================================================================
     # Workers
-    #===========================================================================
+    # ===========================================================================
     @property
     def worker_collection(self):
         'Collection to register workers to'
@@ -275,7 +272,6 @@ class MTQConnection(object):
         '''
         collection = self.worker_collection
         return [mtq.WorkerProxy(self, item) for item in collection.find({'working':True})]
-
 
     def get_job(self, job_id):
         '''
@@ -305,12 +301,9 @@ class MTQConnection(object):
 
         return mtq.WorkerProxy(self, doc)
 
-
-    #===========================================================================
+    # ===========================================================================
     # Scheduler
-    #===========================================================================
+    # ===========================================================================
 
     def scheduler(self):
         return mtq.Scheduler(self)
-
-
